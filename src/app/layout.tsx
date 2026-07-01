@@ -12,6 +12,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "AtresColombia",
   description: "Moda colombiana directa del taller al cliente.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

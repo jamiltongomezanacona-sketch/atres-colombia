@@ -4,6 +4,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import type { Category } from "@/types/category";
 import { categories } from "@/data/categories";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 type MobileMenuProps = {
   open: boolean;
@@ -36,7 +37,7 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
       />
       <aside className="absolute left-0 top-0 flex h-full w-[min(100%,320px)] flex-col bg-atres-surface shadow-soft animate-slide-up">
         <div className="flex items-center justify-between border-b border-atres-border px-4 py-4">
-          <span className="text-lg font-bold text-atres-primary">AtresColombia</span>
+          <BrandLogo size="sm" showName />
           <button
             type="button"
             aria-label="Cerrar menu"

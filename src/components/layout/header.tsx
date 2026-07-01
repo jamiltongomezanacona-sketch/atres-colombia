@@ -8,6 +8,7 @@ import { useCart } from "@/hooks/use-cart";
 import { useCatalogFilterOptional } from "@/hooks/use-catalog-filter";
 import { useFavorites } from "@/hooks/use-favorites";
 import { MobileMenu } from "@/components/layout/mobile-menu";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 function Badge({ count }: { count: number }) {
   if (count <= 0) {
@@ -55,12 +56,7 @@ export function Header() {
             >
               <Menu size={22} />
             </button>
-            <Link
-              href="/"
-              className="min-w-0 flex-1 truncate text-lg font-bold text-atres-primary"
-            >
-              AtresColombia
-            </Link>
+            <BrandLogo size="sm" className="min-w-0 flex-1" />
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -106,12 +102,7 @@ export function Header() {
 
           {/* Desktop layout */}
           <div className="hidden items-center gap-6 lg:flex">
-            <Link
-              href="/"
-              className="shrink-0 text-xl font-bold tracking-tight text-atres-primary"
-            >
-              AtresColombia
-            </Link>
+            <BrandLogo size="md" showName />
             <div className="mx-auto flex w-full max-w-xl items-center gap-2 rounded-xl border border-atres-border bg-atres-bg px-4 py-3">
               <Search size={18} className="shrink-0 text-atres-muted" />
               <input
