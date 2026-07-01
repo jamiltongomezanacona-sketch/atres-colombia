@@ -1,3 +1,4 @@
+export type { AdminDashboardStats, AdminProduct, AdminProductFilters, AdminProductInput, AdminProductStatus } from "@/types/admin-product";
 export type { Category } from "@/types/category";
 export type { CartWorkshopGroup } from "@/types/cart";
 export type {

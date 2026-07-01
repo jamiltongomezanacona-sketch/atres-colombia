@@ -1,3 +1,6 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { CartProvider } from "@/hooks/use-cart";
 import { CatalogFilterProvider } from "@/hooks/use-catalog-filter";
@@ -7,6 +10,13 @@ import { Header } from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 
 export function SiteShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const isPanel = pathname.startsWith("/panel");
+
+  if (isPanel) {
+    return <>{children}</>;
+  }
+
   return (
     <CartProvider>
       <FavoritesProvider>
