@@ -7,6 +7,8 @@ export type Product = {
   id: string;
   slug: string;
   workshopId: string;
+  workshopName: string;
+  workshopSlug: string;
   name: string;
   category: string;
   description: string;

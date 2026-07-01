@@ -7,7 +7,7 @@ import { useCart } from "@/hooks/use-cart";
 
 const navItems = [
   { label: "Inicio", href: "/", icon: Home },
-  { label: "Categorias", href: "/#categorias", icon: Grid2X2 },
+  { label: "Talleres", href: "/#talleres", icon: Grid2X2 },
   { label: "Favoritos", href: "/#favoritos", icon: Heart },
   { label: "Carrito", href: "/carrito", icon: ShoppingBag },
   { label: "Perfil", href: "/nosotros", icon: UserRound },

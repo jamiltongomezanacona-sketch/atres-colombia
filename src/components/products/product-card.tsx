@@ -62,6 +62,14 @@ export function ProductCard({ product }: { product: Product }) {
 
         <ProductMeta colors={product.colors} sizes={product.sizes} />
 
+        <p className="text-xs font-medium text-atres-muted">
+          {product.available
+            ? product.madeToOrder
+              ? "Disponible · Fabricacion bajo pedido"
+              : "Disponible · En inventario"
+            : "No disponible"}
+        </p>
+
         <div className="grid grid-cols-2 gap-2 pt-1">
           <PrimaryButton
             tone="ghost"

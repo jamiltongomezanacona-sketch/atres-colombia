@@ -4,6 +4,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import type { Category } from "@/types/category";
 import { categories } from "@/data/categories";
+import { workshops } from "@/data/workshops";
 import { BrandLogo } from "@/components/layout/brand-logo";
 
 type MobileMenuProps = {
@@ -49,6 +50,22 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
         </div>
         <nav className="flex-1 overflow-y-auto px-4 py-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-atres-muted">
+            Talleres y tiendas
+          </p>
+          <ul className="space-y-1">
+            {workshops.map((workshop) => (
+              <li key={workshop.id}>
+                <Link
+                  href={"/talleres/" + workshop.slug}
+                  onClick={onClose}
+                  className="block rounded-lg px-3 py-2.5 text-sm font-medium text-atres-text transition hover:bg-atres-bg hover:text-atres-primary"
+                >
+                  {workshop.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <p className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wider text-atres-muted">
             Categorias
           </p>
           <ul className="space-y-1">

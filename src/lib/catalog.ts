@@ -34,6 +34,8 @@ export function filterProducts(products: Product[], query: string) {
       product.name,
       product.description,
       product.category,
+      product.workshopName,
+      product.workshopSlug,
       ...product.colors.map((color) => color.name),
       ...product.sizes,
     ]

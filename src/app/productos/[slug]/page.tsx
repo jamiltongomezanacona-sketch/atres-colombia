@@ -44,6 +44,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <section className="space-y-6">
           <div>
             <p className="text-sm font-semibold text-atres-gold">{product.category}</p>
+            <Link
+              href={"/talleres/" + product.workshopSlug}
+              className="mt-1 inline-block text-sm font-medium text-atres-primary transition hover:underline"
+            >
+              {product.workshopName}
+            </Link>
             <h1 className="mt-2 text-2xl font-bold text-atres-text sm:text-3xl lg:text-4xl">
               {product.name}
             </h1>

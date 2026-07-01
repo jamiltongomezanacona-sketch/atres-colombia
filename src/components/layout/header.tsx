@@ -91,7 +91,7 @@ export function Header() {
               <Search size={18} className="shrink-0 text-atres-muted" />
               <input
                 aria-label="Buscar productos"
-                placeholder="Buscar prendas, categorias..."
+                placeholder="Buscar talleres, prendas..."
                 value={catalogFilter?.query ?? ""}
                 onChange={(event) => catalogFilter?.setQuery(event.target.value)}
                 disabled={!catalogFilter}
@@ -107,7 +107,7 @@ export function Header() {
               <Search size={18} className="shrink-0 text-atres-muted" />
               <input
                 aria-label="Buscar productos"
-                placeholder="Buscar prendas, categorias, colores..."
+                placeholder="Buscar talleres, prendas, ciudades..."
                 value={catalogFilter?.query ?? ""}
                 onChange={(event) => catalogFilter?.setQuery(event.target.value)}
                 disabled={!catalogFilter}
