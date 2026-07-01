@@ -32,6 +32,13 @@ export const productSeeds: ProductSeed[] = [
     isNew: true,
     material: "Algodon mezclado con poliester reciclado",
     fabricationTime: "5 a 7 dias habiles",
+    rating: 4.8,
+    reviewCount: 96,
+    soldCount: 214,
+    stockLevel: "made_to_order",
+    careInstructions:
+      "Lavar en ciclo suave, no usar secadora. Planchar del lado contrario para conservar el color.",
+    origin: "Confeccionado en Bogota, Colombia.",
   },
   {
     id: "prod-002",

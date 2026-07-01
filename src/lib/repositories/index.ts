@@ -11,6 +11,8 @@ export {
   getProductsByWorkshopId,
   getProductsByWorkshopSlug,
   getRelatedProducts,
+  getSameWorkshopProducts,
+  getSuggestedProducts,
 } from "@/lib/repositories/product-repository";
 export {
   filterWorkshops,

@@ -5,6 +5,7 @@ export type {
   ProductColor,
   ProductImage,
   ProductSeed,
+  ProductStockLevel,
   ProductVariant,
 } from "@/types/product";
 export type {

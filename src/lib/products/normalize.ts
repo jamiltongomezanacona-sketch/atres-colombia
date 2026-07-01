@@ -1,4 +1,12 @@
 import type { Product, ProductSeed } from "@/types/product";
+import {
+  getDefaultCareInstructions,
+  getDefaultOrigin,
+  getDefaultProductRating,
+  getDefaultReviewCount,
+  getDefaultSoldCount,
+  inferStockLevel,
+} from "@/lib/products/detail-helpers";
 
 export function normalizeProduct(seed: ProductSeed): Product {
   const images = seed.imageUrls.map((url, index) => ({
@@ -42,6 +50,12 @@ export function normalizeProduct(seed: ProductSeed): Product {
     isNew: seed.isNew,
     material: seed.material,
     fabricationTime: seed.fabricationTime,
+    rating: getDefaultProductRating(seed),
+    reviewCount: getDefaultReviewCount(seed),
+    soldCount: getDefaultSoldCount(seed),
+    careInstructions: getDefaultCareInstructions(seed),
+    origin: getDefaultOrigin(seed),
+    stockLevel: inferStockLevel(seed),
   };
 }
 

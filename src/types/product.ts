@@ -3,6 +3,12 @@ export type ProductColor = {
   value: string;
 };
 
+export type ProductStockLevel =
+  | "in_stock"
+  | "low_stock"
+  | "made_to_order"
+  | "out_of_stock";
+
 export type ProductImage = {
   id: string;
   productId: string;
@@ -43,6 +49,12 @@ export type Product = {
   isNew?: boolean;
   material?: string;
   fabricationTime?: string;
+  rating: number;
+  reviewCount: number;
+  soldCount: number;
+  careInstructions: string;
+  origin: string;
+  stockLevel: ProductStockLevel;
 };
 
 export type CartItem = {
@@ -79,4 +91,10 @@ export type ProductSeed = {
   isNew?: boolean;
   material?: string;
   fabricationTime?: string;
+  rating?: number;
+  reviewCount?: number;
+  soldCount?: number;
+  careInstructions?: string;
+  origin?: string;
+  stockLevel?: ProductStockLevel;
 };

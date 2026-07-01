@@ -1,15 +1,11 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { ProductGallery } from "@/components/products/product-gallery";
-import { ProductDetailActions } from "@/components/products/product-detail-actions";
-import { ProductBadges } from "@/components/products/product-badges";
-import { ProductPrice } from "@/components/products/product-price";
-import { RelatedProducts } from "@/components/products/related-products";
+import { ProductDetailView } from "@/components/products/product-detail-view";
 import {
   getProductBySlug,
   getProductSlugs,
-  getRelatedProducts,
+  getSameWorkshopProducts,
+  getSuggestedProducts,
+  getWorkshopBySlug,
 } from "@/lib/repositories";
 
 type ProductPageProps = {
@@ -30,57 +26,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const relatedProducts = getRelatedProducts(slug);
+  const workshop = getWorkshopBySlug(product.workshopSlug);
+
+  if (!workshop) {
+    notFound();
+  }
+
+  const sameWorkshopProducts = getSameWorkshopProducts(slug);
+  const suggestedProducts = getSuggestedProducts(slug);
 
   return (
-    <article className="space-y-8 animate-slide-up">
-      <Link
-        href={"/talleres/" + product.workshopSlug + "/catalogo"}
-        className="inline-flex items-center gap-2 text-sm font-semibold text-atres-muted transition duration-200 hover:text-atres-primary"
-      >
-        <ArrowLeft size={18} />
-        Volver al catalogo de {product.workshopName}
-      </Link>
-
-      <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-        <ProductGallery name={product.name} product={product} />
-
-        <section className="space-y-6">
-          <div>
-            <p className="text-sm font-semibold text-atres-gold">
-              {product.categoryName}
-            </p>
-            <Link
-              href={"/talleres/" + product.workshopSlug}
-              className="mt-1 inline-block text-sm font-medium text-atres-primary transition hover:underline"
-            >
-              {product.workshopName}
-            </Link>
-            <h1 className="mt-2 text-2xl font-bold text-atres-text sm:text-3xl lg:text-4xl">
-              {product.name}
-            </h1>
-            <ProductBadges product={product} variant="inline" />
-          </div>
-
-          <ProductPrice
-            price={product.price}
-            previousPrice={product.previousPrice}
-            discount={product.discount}
-            size="lg"
-          />
-
-          <div className="rounded-2xl border border-atres-border bg-atres-bg p-4">
-            <h2 className="text-sm font-semibold text-atres-text">Descripcion</h2>
-            <p className="mt-2 text-sm leading-7 text-atres-muted">
-              {product.longDescription}
-            </p>
-          </div>
-
-          <ProductDetailActions product={product} />
-        </section>
-      </div>
-
-      <RelatedProducts products={relatedProducts} />
-    </article>
+    <ProductDetailView
+      product={product}
+      workshop={workshop}
+      sameWorkshopProducts={sameWorkshopProducts}
+      suggestedProducts={suggestedProducts}
+    />
   );
 }

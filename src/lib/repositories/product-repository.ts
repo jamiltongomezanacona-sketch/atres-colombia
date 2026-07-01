@@ -37,6 +37,35 @@ export function getProductSlugs(): string[] {
   return loadProducts().map((product) => product.slug);
 }
 
+export function getSameWorkshopProducts(slug: string, limit = 4): Product[] {
+  const product = getProductBySlug(slug);
+
+  if (!product) {
+    return [];
+  }
+
+  return getProductsByWorkshopSlug(product.workshopSlug)
+    .filter((item) => item.slug !== slug)
+    .slice(0, limit);
+}
+
+export function getSuggestedProducts(slug: string, limit = 4): Product[] {
+  const product = getProductBySlug(slug);
+
+  if (!product) {
+    return [];
+  }
+
+  return loadProducts()
+    .filter(
+      (item) =>
+        item.slug !== slug &&
+        item.workshopSlug !== product.workshopSlug &&
+        item.categoryId === product.categoryId,
+    )
+    .slice(0, limit);
+}
+
 export function getRelatedProducts(slug: string, limit = 3): Product[] {
   const product = getProductBySlug(slug);
 
