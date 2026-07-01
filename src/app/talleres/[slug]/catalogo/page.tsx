@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { WorkshopCatalogView } from "@/components/workshops/workshop-catalog-view";
 import {
-  getProductsByWorkshopSlug,
-  getWorkshopBySlug,
+  getProductsByWorkshopSlugAsync,
+  getWorkshopBySlugAsync,
   getWorkshopSlugs,
 } from "@/lib/repositories";
 
@@ -20,13 +20,13 @@ export default async function WorkshopCatalogPage({
   params,
 }: WorkshopCatalogPageProps) {
   const { slug } = await params;
-  const workshop = getWorkshopBySlug(slug);
+  const workshop = await getWorkshopBySlugAsync(slug);
 
   if (!workshop) {
     notFound();
   }
 
-  const products = getProductsByWorkshopSlug(slug);
+  const products = await getProductsByWorkshopSlugAsync(slug);
 
   return <WorkshopCatalogView workshop={workshop} products={products} />;
 }

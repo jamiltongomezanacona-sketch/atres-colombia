@@ -3,13 +3,15 @@ import { HeroSlider } from "@/components/home/hero-slider";
 import { WorkshopList } from "@/components/workshops/workshop-list";
 import { heroSlides } from "@/data/hero-slides";
 import {
-  getAllProducts,
-  getAllWorkshops,
+  getAllProductsAsync,
+  getAllWorkshopsAsync,
 } from "@/lib/repositories";
 
-export default function Home() {
-  const workshops = getAllWorkshops();
-  const products = getAllProducts();
+export default async function Home() {
+  const [workshops, products] = await Promise.all([
+    getAllWorkshopsAsync(),
+    getAllProductsAsync(),
+  ]);
 
   return (
     <div className="space-y-8 sm:space-y-10">

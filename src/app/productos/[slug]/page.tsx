@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { ProductDetailView } from "@/components/products/product-detail-view";
 import {
-  getProductBySlug,
-  getProductSlugs,
-  getSameWorkshopProducts,
-  getSuggestedProducts,
-  getWorkshopBySlug,
+  getProductBySlugAsync,
+  getProductSlugsAsync,
+  getSameWorkshopProductsAsync,
+  getSuggestedProductsAsync,
+  getWorkshopBySlugAsync,
 } from "@/lib/repositories";
 
 type ProductPageProps = {
@@ -14,26 +14,29 @@ type ProductPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return getProductSlugs().map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  const slugs = await getProductSlugsAsync();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlugAsync(slug);
 
   if (!product) {
     notFound();
   }
 
-  const workshop = getWorkshopBySlug(product.workshopSlug);
+  const workshop = await getWorkshopBySlugAsync(product.workshopSlug);
 
   if (!workshop) {
     notFound();
   }
 
-  const sameWorkshopProducts = getSameWorkshopProducts(slug);
-  const suggestedProducts = getSuggestedProducts(slug);
+  const [sameWorkshopProducts, suggestedProducts] = await Promise.all([
+    getSameWorkshopProductsAsync(slug),
+    getSuggestedProductsAsync(slug),
+  ]);
 
   return (
     <ProductDetailView

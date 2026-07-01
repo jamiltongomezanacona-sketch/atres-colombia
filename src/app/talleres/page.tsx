@@ -1,8 +1,8 @@
 import { WorkshopList } from "@/components/workshops/workshop-list";
-import { getAllWorkshops } from "@/lib/repositories";
+import { getAllWorkshopsAsync } from "@/lib/repositories";
 
-export default function WorkshopsPage() {
-  const workshops = getAllWorkshops();
+export default async function WorkshopsPage() {
+  const workshops = await getAllWorkshopsAsync();
 
   return (
     <div className="space-y-6">
