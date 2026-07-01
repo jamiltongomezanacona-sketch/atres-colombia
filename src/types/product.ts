@@ -1,3 +1,5 @@
+import type { WorkshopKind } from "@/types/workshop";
+
 export type ProductColor = {
   name: string;
   value: string;
@@ -66,6 +68,11 @@ export type CartItem = {
   color: string;
   size: string;
   quantity: number;
+  workshopId: string;
+  workshopSlug: string;
+  workshopName: string;
+  workshopLocation: string;
+  workshopKind: WorkshopKind;
 };
 
 /** Entrada simplificada para data/; se normaliza en el repositorio. */

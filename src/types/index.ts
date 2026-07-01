@@ -1,4 +1,5 @@
 export type { Category } from "@/types/category";
+export type { CartWorkshopGroup } from "@/types/cart";
 export type {
   CartItem,
   Product,

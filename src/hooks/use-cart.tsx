@@ -9,8 +9,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { CartWorkshopGroup } from "@/types/cart";
 import type { CartItem, Product } from "@/types/product";
+import {
+  calculateCartTotal,
+  calculateSimulatedShipping,
+  groupCartItemsByWorkshop,
+} from "@/lib/cart/helpers";
 import { getPrimaryImageUrl } from "@/lib/products/helpers";
+import { getProductBySlug, getWorkshopBySlug } from "@/lib/repositories";
 
 type AddToCartInput = {
   product: Product;
@@ -20,8 +27,11 @@ type AddToCartInput = {
 
 type CartContextValue = {
   items: CartItem[];
+  groups: CartWorkshopGroup[];
   count: number;
   subtotal: number;
+  shipping: number;
+  total: number;
   addItem: (input: AddToCartInput) => void;
   removeItem: (key: string) => void;
   updateQuantity: (key: string, quantity: number) => void;
@@ -35,6 +45,33 @@ function getItemKey(item: Pick<CartItem, "productId" | "color" | "size">) {
   return item.productId + ":" + item.color + ":" + item.size;
 }
 
+function enrichCartItem(item: CartItem): CartItem {
+  if (item.workshopId && item.workshopName && item.workshopLocation) {
+    return item;
+  }
+
+  const product = getProductBySlug(item.slug);
+
+  if (!product) {
+    return item;
+  }
+
+  const workshop = getWorkshopBySlug(product.workshopSlug);
+
+  return {
+    ...item,
+    workshopId: product.workshopId,
+    workshopSlug: product.workshopSlug,
+    workshopName: product.workshopName,
+    workshopLocation: workshop?.location ?? "",
+    workshopKind: workshop?.kind ?? "workshop",
+  };
+}
+
+function migrateCartItems(items: CartItem[]): CartItem[] {
+  return items.map(enrichCartItem);
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isReady, setIsReady] = useState(false);
@@ -43,7 +80,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const storedCart = window.localStorage.getItem(STORAGE_KEY);
 
     if (storedCart) {
-      setItems(JSON.parse(storedCart) as CartItem[]);
+      setItems(migrateCartItems(JSON.parse(storedCart) as CartItem[]));
     }
 
     setIsReady(true);
@@ -56,6 +93,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [isReady, items]);
 
   const addItem = useCallback(({ product, color, size }: AddToCartInput) => {
+    const workshop = getWorkshopBySlug(product.workshopSlug);
+
     setItems((currentItems) => {
       const nextItem: CartItem = {
         productId: product.id,
@@ -66,6 +105,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         color,
         size,
         quantity: 1,
+        workshopId: product.workshopId,
+        workshopSlug: product.workshopSlug,
+        workshopName: product.workshopName,
+        workshopLocation: workshop?.location ?? "",
+        workshopKind: workshop?.kind ?? "workshop",
       };
       const nextKey = getItemKey(nextItem);
       const existingItem = currentItems.find(
@@ -90,15 +134,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const updateQuantity = useCallback((key: string, quantity: number) => {
-    setItems((currentItems) =>
-      currentItems.map((item) =>
-        getItemKey(item) === key
-          ? { ...item, quantity: Math.max(1, quantity) }
-          : item,
-      ),
-    );
-  }, []);
+  const updateQuantity = useCallback(
+    (key: string, quantity: number) => {
+      if (quantity < 1) {
+        removeItem(key);
+        return;
+      }
+
+      setItems((currentItems) =>
+        currentItems.map((item) =>
+          getItemKey(item) === key ? { ...item, quantity } : item,
+        ),
+      );
+    },
+    [removeItem],
+  );
 
   const clearCart = useCallback(() => {
     setItems([]);
@@ -110,11 +160,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       (total, item) => total + item.price * item.quantity,
       0,
     );
+    const groups = groupCartItemsByWorkshop(items);
+    const shipping = calculateSimulatedShipping(count);
+    const total = calculateCartTotal(subtotal, shipping);
 
     return {
       items,
+      groups,
       count,
       subtotal,
+      shipping,
+      total,
       addItem,
       removeItem,
       updateQuantity,
