@@ -15,9 +15,7 @@ export function groupProductsByCategory(
   return categories
     .map((category) => ({
       category,
-      products: products.filter(
-        (product) => getCategoryId(product.category) === category.id,
-      ),
+      products: products.filter((product) => product.categoryId === category.id),
     }))
     .filter((section) => section.products.length > 0);
 }
@@ -33,11 +31,11 @@ export function filterProducts(products: Product[], query: string) {
     const searchableText = [
       product.name,
       product.description,
-      product.category,
+      product.categoryName,
       product.workshopName,
       product.workshopSlug,
-      ...product.colors.map((color) => color.name),
-      ...product.sizes,
+      ...product.variants.map((variant) => variant.colorName),
+      ...product.variants.map((variant) => variant.size),
     ]
       .join(" ")
       .toLowerCase();

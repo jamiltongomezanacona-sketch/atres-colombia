@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { CartItem, Product } from "@/types/product";
+import { getPrimaryImageUrl } from "@/lib/products/helpers";
 
 type AddToCartInput = {
   product: Product;
@@ -61,7 +62,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         slug: product.slug,
         name: product.name,
         price: product.price,
-        image: product.images[0],
+        image: getPrimaryImageUrl(product),
         color,
         size,
         quantity: 1,

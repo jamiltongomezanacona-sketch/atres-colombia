@@ -5,6 +5,11 @@ import Link from "next/link";
 import { Plus, ShoppingBag } from "lucide-react";
 import type { Product } from "@/types/product";
 import { useCart } from "@/hooks/use-cart";
+import {
+  getPrimaryImageUrl,
+  getProductColors,
+  getProductSizes,
+} from "@/lib/products/helpers";
 import { FavoriteButton } from "@/components/products/favorite-button";
 import { ProductBadges } from "@/components/products/product-badges";
 import { ProductMeta } from "@/components/products/product-meta";
@@ -13,12 +18,15 @@ import { PrimaryButton } from "@/components/ui/primary-button";
 
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
+  const colors = getProductColors(product);
+  const sizes = getProductSizes(product);
+  const primaryImage = getPrimaryImageUrl(product);
 
   const handleAdd = () => {
     addItem({
       product,
-      color: product.colors[0].name,
-      size: product.sizes[0],
+      color: colors[0]?.name ?? "",
+      size: sizes[0] ?? "",
     });
   };
 
@@ -30,7 +38,7 @@ export function ProductCard({ product }: { product: Product }) {
           className="relative block aspect-[3/4] overflow-hidden rounded-t-2xl bg-atres-bg"
         >
           <Image
-            src={product.images[0]}
+            src={primaryImage}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px"
@@ -60,7 +68,7 @@ export function ProductCard({ product }: { product: Product }) {
           size="sm"
         />
 
-        <ProductMeta colors={product.colors} sizes={product.sizes} />
+        <ProductMeta colors={colors} sizes={sizes} />
 
         <p className="text-xs font-medium text-atres-muted">
           {product.available

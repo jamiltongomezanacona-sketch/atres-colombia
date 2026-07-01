@@ -2,20 +2,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Star, BadgeCheck } from "lucide-react";
 import type { Workshop } from "@/types/workshop";
-import { getProductCountForWorkshop } from "@/lib/workshops";
-import { PrimaryButton } from "@/components/ui/primary-button";
+import { PrimaryButton } from "@/components/shared";
 
 type WorkshopCardProps = {
   workshop: Workshop;
 };
 
 export function WorkshopCard({ workshop }: WorkshopCardProps) {
-  const productCount = getProductCountForWorkshop(workshop);
+  const catalogHref = "/talleres/" + workshop.slug + "/catalogo";
 
   return (
     <article className="group overflow-hidden rounded-2xl border border-atres-border bg-atres-surface shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-card-hover">
       <Link
-        href={"/talleres/" + workshop.slug}
+        href={catalogHref}
         className="relative block aspect-[16/10] overflow-hidden bg-atres-bg"
       >
         <Image
@@ -29,7 +28,7 @@ export function WorkshopCard({ workshop }: WorkshopCardProps) {
         <div className="absolute bottom-3 left-3 flex items-center gap-2">
           <span className="relative h-10 w-10 overflow-hidden rounded-xl border-2 border-white bg-white shadow-sm">
             <Image
-              src={workshop.logoImage}
+              src={workshop.logo}
               alt={"Logo de " + workshop.name}
               fill
               sizes="40px"
@@ -39,7 +38,7 @@ export function WorkshopCard({ workshop }: WorkshopCardProps) {
           {workshop.verified ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-atres-primary/90 px-2.5 py-1 text-[10px] font-semibold text-white">
               <BadgeCheck size={12} />
-              {workshop.verifiedLabel}
+              Taller verificado
             </span>
           ) : null}
         </div>
@@ -47,7 +46,7 @@ export function WorkshopCard({ workshop }: WorkshopCardProps) {
 
       <div className="space-y-3 p-4">
         <div>
-          <Link href={"/talleres/" + workshop.slug}>
+          <Link href={catalogHref}>
             <h3 className="text-base font-bold text-atres-text transition group-hover:text-atres-primary sm:text-lg">
               {workshop.name}
             </h3>
@@ -78,15 +77,16 @@ export function WorkshopCard({ workshop }: WorkshopCardProps) {
             <Star size={15} className="fill-atres-gold text-atres-gold" />
             {workshop.rating.toFixed(1)}
             <span className="font-normal text-atres-muted">
-              ({workshop.reviews})
+              ({workshop.reviewCount})
             </span>
           </span>
           <span className="text-xs text-atres-muted">
-            {productCount} {productCount === 1 ? "producto" : "productos"}
+            {workshop.productCount}{" "}
+            {workshop.productCount === 1 ? "producto" : "productos"}
           </span>
         </div>
 
-        <Link href={"/talleres/" + workshop.slug} className="block pt-1">
+        <Link href={catalogHref} className="block pt-1">
           <PrimaryButton tone="primary" size="sm" className="w-full">
             Ver catalogo
           </PrimaryButton>

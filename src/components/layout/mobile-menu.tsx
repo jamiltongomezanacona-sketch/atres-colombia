@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { X } from "lucide-react";
-import type { Category } from "@/types/category";
-import { categories } from "@/data/categories";
-import { workshops } from "@/data/workshops";
 import { BrandLogo } from "@/components/layout/brand-logo";
+import { getAllCategories } from "@/lib/repositories/category-repository";
+import { getAllWorkshops } from "@/lib/repositories/workshop-repository";
 
 type MobileMenuProps = {
   open: boolean;
@@ -14,6 +13,7 @@ type MobileMenuProps = {
 
 const menuLinks = [
   { label: "Inicio", href: "/" },
+  { label: "Todos los talleres", href: "/talleres" },
   { label: "Carrito", href: "/carrito" },
   { label: "Perfil", href: "/nosotros" },
 ];
@@ -23,10 +23,8 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
     return null;
   }
 
-  const handleCategoryClick = (category: Category) => {
-    onClose();
-    window.location.href = category.href;
-  };
+  const workshops = getAllWorkshops();
+  const categories = getAllCategories();
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
@@ -56,7 +54,7 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
             {workshops.map((workshop) => (
               <li key={workshop.id}>
                 <Link
-                  href={"/talleres/" + workshop.slug}
+                  href={"/talleres/" + workshop.slug + "/catalogo"}
                   onClick={onClose}
                   className="block rounded-lg px-3 py-2.5 text-sm font-medium text-atres-text transition hover:bg-atres-bg hover:text-atres-primary"
                 >
@@ -71,13 +69,13 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
           <ul className="space-y-1">
             {categories.map((category) => (
               <li key={category.id}>
-                <button
-                  type="button"
-                  onClick={() => handleCategoryClick(category)}
-                  className="w-full cursor-pointer rounded-lg px-3 py-2.5 text-left text-sm font-medium text-atres-text transition hover:bg-atres-bg hover:text-atres-primary"
+                <Link
+                  href={category.href ?? "/talleres"}
+                  onClick={onClose}
+                  className="block rounded-lg px-3 py-2.5 text-sm font-medium text-atres-text transition hover:bg-atres-bg hover:text-atres-primary"
                 >
                   {category.name}
-                </button>
+                </Link>
               </li>
             ))}
           </ul>

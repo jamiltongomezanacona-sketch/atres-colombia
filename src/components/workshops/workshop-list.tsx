@@ -4,13 +4,19 @@ import { useMemo } from "react";
 import type { Workshop } from "@/types/workshop";
 import { WorkshopCard } from "@/components/workshops/workshop-card";
 import { useCatalogFilter } from "@/hooks/use-catalog-filter";
-import { filterWorkshops } from "@/lib/workshops";
+import { filterWorkshops } from "@/lib/repositories/workshop-repository";
 
 type WorkshopListProps = {
   workshops: Workshop[];
+  title?: string;
+  description?: string;
 };
 
-export function WorkshopList({ workshops }: WorkshopListProps) {
+export function WorkshopList({
+  workshops,
+  title = "Explora por talleres y tiendas",
+  description = "Cada taller y tienda tiene su propio catalogo. Compra directo desde quien confecciona.",
+}: WorkshopListProps) {
   const { query } = useCatalogFilter();
 
   const visibleWorkshops = useMemo(
@@ -25,11 +31,10 @@ export function WorkshopList({ workshops }: WorkshopListProps) {
           Puntos de confeccion
         </p>
         <h2 className="mt-1 text-xl font-bold text-atres-text sm:text-2xl">
-          Explora por talleres y tiendas
+          {title}
         </h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-atres-muted">
-          Cada taller y tienda tiene su propio catalogo. Compra directo desde quien
-          confecciona.
+          {description}
         </p>
       </div>
 

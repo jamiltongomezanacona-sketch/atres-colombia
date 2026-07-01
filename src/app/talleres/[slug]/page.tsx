@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
-import { WorkshopHeader } from "@/components/workshops/workshop-header";
-import { WorkshopCatalog } from "@/components/workshops/workshop-catalog";
-import { getProductsByWorkshopSlug } from "@/data/products";
-import { getWorkshopBySlug, workshops } from "@/data/workshops";
+import { WorkshopProfile } from "@/components/workshops/workshop-profile";
+import {
+  getWorkshopBySlug,
+  getWorkshopSlugs,
+} from "@/lib/repositories";
 
 type WorkshopPageProps = {
   params: Promise<{
@@ -11,7 +12,7 @@ type WorkshopPageProps = {
 };
 
 export function generateStaticParams() {
-  return workshops.map((workshop) => ({ slug: workshop.slug }));
+  return getWorkshopSlugs().map((slug) => ({ slug }));
 }
 
 export default async function WorkshopPage({ params }: WorkshopPageProps) {
@@ -22,12 +23,9 @@ export default async function WorkshopPage({ params }: WorkshopPageProps) {
     notFound();
   }
 
-  const products = getProductsByWorkshopSlug(slug);
-
   return (
     <div className="space-y-8 sm:space-y-10">
-      <WorkshopHeader workshop={workshop} />
-      <WorkshopCatalog workshop={workshop} products={products} />
+      <WorkshopProfile workshop={workshop} />
     </div>
   );
 }

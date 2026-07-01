@@ -6,7 +6,11 @@ import { ProductDetailActions } from "@/components/products/product-detail-actio
 import { ProductBadges } from "@/components/products/product-badges";
 import { ProductPrice } from "@/components/products/product-price";
 import { RelatedProducts } from "@/components/products/related-products";
-import { getProductBySlug, getRelatedProducts, products } from "@/data/products";
+import {
+  getProductBySlug,
+  getProductSlugs,
+  getRelatedProducts,
+} from "@/lib/repositories";
 
 type ProductPageProps = {
   params: Promise<{
@@ -15,7 +19,7 @@ type ProductPageProps = {
 };
 
 export function generateStaticParams() {
-  return products.map((product) => ({ slug: product.slug }));
+  return getProductSlugs().map((slug) => ({ slug }));
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
@@ -31,19 +35,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <article className="space-y-8 animate-slide-up">
       <Link
-        href="/"
+        href={"/talleres/" + product.workshopSlug + "/catalogo"}
         className="inline-flex items-center gap-2 text-sm font-semibold text-atres-muted transition duration-200 hover:text-atres-primary"
       >
         <ArrowLeft size={18} />
-        Volver al catalogo
+        Volver al catalogo de {product.workshopName}
       </Link>
 
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-        <ProductGallery name={product.name} images={product.images} />
+        <ProductGallery name={product.name} product={product} />
 
         <section className="space-y-6">
           <div>
-            <p className="text-sm font-semibold text-atres-gold">{product.category}</p>
+            <p className="text-sm font-semibold text-atres-gold">
+              {product.categoryName}
+            </p>
             <Link
               href={"/talleres/" + product.workshopSlug}
               className="mt-1 inline-block text-sm font-medium text-atres-primary transition hover:underline"

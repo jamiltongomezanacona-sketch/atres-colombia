@@ -5,11 +5,14 @@ import { Check, Clock, Package, Ruler, ShoppingBag, Sparkles } from "lucide-reac
 import { useState } from "react";
 import type { Product } from "@/types/product";
 import { useCart } from "@/hooks/use-cart";
+import { getProductColors, getProductSizes } from "@/lib/products/helpers";
 import { PrimaryButton } from "@/components/ui/primary-button";
 
 export function ProductDetailActions({ product }: { product: Product }) {
-  const [selectedColor, setSelectedColor] = useState(product.colors[0].name);
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
+  const colors = getProductColors(product);
+  const sizes = getProductSizes(product);
+  const [selectedColor, setSelectedColor] = useState(colors[0]?.name ?? "");
+  const [selectedSize, setSelectedSize] = useState(sizes[0] ?? "");
   const { addItem } = useCart();
   const router = useRouter();
 
@@ -31,7 +34,7 @@ export function ProductDetailActions({ product }: { product: Product }) {
       <div>
         <p className="mb-3 text-sm font-semibold text-atres-text">Colores</p>
         <div className="flex flex-wrap gap-2">
-          {product.colors.map((color) => (
+          {colors.map((color) => (
             <button
               key={color.name}
               type="button"
@@ -56,7 +59,7 @@ export function ProductDetailActions({ product }: { product: Product }) {
       <div>
         <p className="mb-3 text-sm font-semibold text-atres-text">Tallas</p>
         <div className="flex flex-wrap gap-2">
-          {product.sizes.map((size) => (
+          {sizes.map((size) => (
             <button
               key={size}
               type="button"

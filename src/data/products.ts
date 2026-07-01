@@ -1,14 +1,15 @@
-import type { Product } from "@/types/product";
+import type { ProductSeed } from "@/types/product";
 
-export const products: Product[] = [
+export const productSeeds: ProductSeed[] = [
   {
     id: "prod-001",
     slug: "chaqueta-bogota-verde",
     workshopId: "ws-atres-colombia",
-    workshopName: "AtresColombia",
     workshopSlug: "atres-colombia",
+    workshopName: "AtresColombia",
+    categoryId: "chaquetas",
+    categoryName: "Chaquetas",
     name: "Chaqueta Bogota Verde",
-    category: "Chaquetas",
     description: "Chaqueta ligera con corte urbano y acabado resistente.",
     longDescription:
       "Una prenda versatil para clima templado, confeccionada en taller colombiano con bolsillos amplios, cierre frontal y silueta limpia para uso diario.",
@@ -21,7 +22,7 @@ export const products: Product[] = [
       { name: "Arena", value: "#b7a783" },
     ],
     sizes: ["S", "M", "L", "XL"],
-    images: [
+    imageUrls: [
       "/placeholders/chaqueta-verde.svg",
       "/placeholders/chaqueta-negra.svg",
       "/placeholders/textura-taller.svg",
@@ -36,10 +37,11 @@ export const products: Product[] = [
     id: "prod-002",
     slug: "camisa-medellin-lino",
     workshopId: "ws-atres-colombia",
-    workshopName: "AtresColombia",
     workshopSlug: "atres-colombia",
+    workshopName: "AtresColombia",
+    categoryId: "camisas",
+    categoryName: "Camisas",
     name: "Camisa Medellin Lino",
-    category: "Camisas",
     description: "Camisa fresca de manga corta con textura natural.",
     longDescription:
       "Camisa pensada para dias calidos, hecha en lino mezclado con cuello abierto, caida suave y costuras reforzadas.",
@@ -50,7 +52,7 @@ export const products: Product[] = [
       { name: "Carbon", value: "#262927" },
     ],
     sizes: ["S", "M", "L"],
-    images: [
+    imageUrls: [
       "/placeholders/camisa-lino.svg",
       "/placeholders/camisa-oliva.svg",
       "/placeholders/textura-taller.svg",
@@ -65,10 +67,11 @@ export const products: Product[] = [
     id: "prod-003",
     slug: "pantalon-cali-recto",
     workshopId: "ws-atres-colombia",
-    workshopName: "AtresColombia",
     workshopSlug: "atres-colombia",
+    workshopName: "AtresColombia",
+    categoryId: "pantalones",
+    categoryName: "Pantalones",
     name: "Pantalon Cali Recto",
-    category: "Pantalones",
     description: "Pantalon recto con pretina comoda y tela flexible.",
     longDescription:
       "Un basico de taller para rotacion diaria, con horma recta, bolsillos funcionales y una mezcla textil que conserva la forma.",
@@ -81,7 +84,7 @@ export const products: Product[] = [
       { name: "Verde noche", value: "#0e2c22" },
     ],
     sizes: ["28", "30", "32", "34", "36"],
-    images: [
+    imageUrls: [
       "/placeholders/pantalon-recto.svg",
       "/placeholders/pantalon-tabaco.svg",
       "/placeholders/textura-taller.svg",
@@ -95,10 +98,11 @@ export const products: Product[] = [
     id: "prod-004",
     slug: "tenis-barranquilla-cuero",
     workshopId: "ws-atres-colombia",
-    workshopName: "AtresColombia",
     workshopSlug: "atres-colombia",
+    workshopName: "AtresColombia",
+    categoryId: "calzado",
+    categoryName: "Calzado",
     name: "Tenis Barranquilla Cuero",
-    category: "Calzado",
     description: "Tenis de cuero con suela ligera y acabado minimalista.",
     longDescription:
       "Calzado casual fabricado en cuero colombiano, con interior suave, suela flexible y lineas limpias para combinar con prendas urbanas.",
@@ -109,7 +113,7 @@ export const products: Product[] = [
       { name: "Cafe", value: "#694323" },
     ],
     sizes: ["37", "38", "39", "40", "41", "42"],
-    images: [
+    imageUrls: [
       "/placeholders/tenis-cuero.svg",
       "/placeholders/tenis-negro.svg",
       "/placeholders/textura-taller.svg",
@@ -123,10 +127,11 @@ export const products: Product[] = [
     id: "prod-005",
     slug: "uniforme-colegio-soacha",
     workshopId: "ws-confecciones-soacha",
-    workshopName: "Confecciones Soacha",
     workshopSlug: "confecciones-soacha",
+    workshopName: "Confecciones Soacha",
+    categoryId: "uniformes",
+    categoryName: "Uniformes",
     name: "Uniforme Colegio Soacha",
-    category: "Uniformes",
     description: "Uniforme escolar resistente con bordado personalizable.",
     longDescription:
       "Conjunto escolar confeccionado en drill reforzado, ideal para colegios locales. Incluye opcion de bordado de institucion.",
@@ -136,7 +141,7 @@ export const products: Product[] = [
       { name: "Gris", value: "#6b7280" },
     ],
     sizes: ["6", "8", "10", "12", "14", "16"],
-    images: [
+    imageUrls: [
       "/placeholders/camisa-lino.svg",
       "/placeholders/textura-taller.svg",
     ],
@@ -149,10 +154,11 @@ export const products: Product[] = [
     id: "prod-006",
     slug: "dotacion-empresarial-soacha",
     workshopId: "ws-confecciones-soacha",
-    workshopName: "Confecciones Soacha",
     workshopSlug: "confecciones-soacha",
+    workshopName: "Confecciones Soacha",
+    categoryId: "uniformes",
+    categoryName: "Uniformes",
     name: "Dotacion Empresarial",
-    category: "Uniformes",
     description: "Camisa y pantalon para dotacion corporativa por pedido.",
     longDescription:
       "Set basico de dotacion laboral con costuras reforzadas y opciones de tallaje amplio para equipos de trabajo.",
@@ -162,7 +168,7 @@ export const products: Product[] = [
       { name: "Negro", value: "#111111" },
     ],
     sizes: ["S", "M", "L", "XL", "XXL"],
-    images: [
+    imageUrls: [
       "/placeholders/camisa-oliva.svg",
       "/placeholders/pantalon-recto.svg",
     ],
@@ -175,10 +181,11 @@ export const products: Product[] = [
     id: "prod-007",
     slug: "blazer-urbano-victorino",
     workshopId: "ws-taller-san-victorino",
-    workshopName: "Taller San Victorino",
     workshopSlug: "taller-san-victorino",
+    workshopName: "Taller San Victorino",
+    categoryId: "chaquetas",
+    categoryName: "Chaquetas",
     name: "Blazer Urbano Victorino",
-    category: "Chaquetas",
     description: "Blazer ligero con corte moderno para uso diario.",
     longDescription:
       "Prenda confeccionada en el circuito de San Victorino con excelente relacion calidad-precio y acabados comerciales.",
@@ -190,7 +197,7 @@ export const products: Product[] = [
       { name: "Azul noche", value: "#1e2a44" },
     ],
     sizes: ["S", "M", "L", "XL"],
-    images: [
+    imageUrls: [
       "/placeholders/chaqueta-negra.svg",
       "/placeholders/textura-taller.svg",
     ],
@@ -204,10 +211,11 @@ export const products: Product[] = [
     id: "prod-008",
     slug: "blusa-lino-restrepo",
     workshopId: "ws-moda-restrepo",
-    workshopName: "Moda Restrepo",
     workshopSlug: "moda-restrepo",
+    workshopName: "Moda Restrepo",
+    categoryId: "camisas",
+    categoryName: "Camisas",
     name: "Blusa Lino Restrepo",
-    category: "Camisas",
     description: "Blusa fresca de lino con caida suave y cuello redondo.",
     longDescription:
       "Prenda femenina ideal para clima calido, confeccionada en telas naturales seleccionadas por Moda Restrepo.",
@@ -217,7 +225,7 @@ export const products: Product[] = [
       { name: "Rosa palo", value: "#d4a5a5" },
     ],
     sizes: ["S", "M", "L"],
-    images: [
+    imageUrls: [
       "/placeholders/camisa-oliva.svg",
       "/placeholders/camisa-lino.svg",
     ],
@@ -230,10 +238,11 @@ export const products: Product[] = [
     id: "prod-009",
     slug: "hoodie-kennedy-urban",
     workshopId: "ws-tienda-kennedy",
-    workshopName: "Tienda Kennedy",
     workshopSlug: "tienda-kennedy",
+    workshopName: "Tienda Kennedy",
+    categoryId: "chaquetas",
+    categoryName: "Chaquetas",
     name: "Hoodie Kennedy Urban",
-    category: "Chaquetas",
     description: "Hoodie oversize con capucha reforzada y felpa suave.",
     longDescription:
       "Basico streetwear de Tienda Kennedy, pensado para uso diario con estilo urbano y comodidad.",
@@ -243,7 +252,7 @@ export const products: Product[] = [
       { name: "Verde oliva", value: "#4a5d3f" },
     ],
     sizes: ["S", "M", "L", "XL"],
-    images: [
+    imageUrls: [
       "/placeholders/chaqueta-verde.svg",
       "/placeholders/pantalon-tabaco.svg",
     ],
@@ -257,10 +266,11 @@ export const products: Product[] = [
     id: "prod-010",
     slug: "mocasin-cuero-bucaramanga",
     workshopId: "ws-calzado-bucaramanga",
-    workshopName: "Calzado Bucaramanga",
     workshopSlug: "calzado-bucaramanga",
+    workshopName: "Calzado Bucaramanga",
+    categoryId: "calzado",
+    categoryName: "Calzado",
     name: "Mocasin Cuero Bucaramanga",
-    category: "Calzado",
     description: "Mocasin artesanal en cuero con costura reforzada.",
     longDescription:
       "Calzado hecho en Bucaramanga con tradicion de taller. Suela flexible y acabado en cuero natural.",
@@ -270,7 +280,7 @@ export const products: Product[] = [
       { name: "Negro", value: "#111111" },
     ],
     sizes: ["38", "39", "40", "41", "42"],
-    images: [
+    imageUrls: [
       "/placeholders/tenis-cuero.svg",
       "/placeholders/tenis-negro.svg",
     ],
@@ -283,10 +293,11 @@ export const products: Product[] = [
     id: "prod-011",
     slug: "bota-casual-bucaramanga",
     workshopId: "ws-calzado-bucaramanga",
-    workshopName: "Calzado Bucaramanga",
     workshopSlug: "calzado-bucaramanga",
+    workshopName: "Calzado Bucaramanga",
+    categoryId: "calzado",
+    categoryName: "Calzado",
     name: "Bota Casual Bucaramanga",
-    category: "Calzado",
     description: "Bota casual de cuero con plantilla acolchada.",
     longDescription:
       "Modelo versatil para ciudad, fabricado en el taller santandereano con acabados premium.",
@@ -298,7 +309,7 @@ export const products: Product[] = [
       { name: "Negro", value: "#101010" },
     ],
     sizes: ["38", "39", "40", "41", "42", "43"],
-    images: [
+    imageUrls: [
       "/placeholders/tenis-negro.svg",
       "/placeholders/textura-taller.svg",
     ],
@@ -308,36 +319,3 @@ export const products: Product[] = [
     fabricationTime: "6 a 10 dias habiles",
   },
 ];
-
-export function getProductBySlug(slug: string) {
-  return products.find((product) => product.slug === slug);
-}
-
-export function getProductsByWorkshopSlug(workshopSlug: string) {
-  return products.filter((product) => product.workshopSlug === workshopSlug);
-}
-
-export function getRelatedProducts(slug: string, limit = 3) {
-  const product = getProductBySlug(slug);
-
-  if (!product) {
-    return [];
-  }
-
-  const sameWorkshop = products.filter(
-    (item) => item.workshopSlug === product.workshopSlug && item.slug !== slug,
-  );
-
-  if (sameWorkshop.length >= limit) {
-    return sameWorkshop.slice(0, limit);
-  }
-
-  const sameCategory = products.filter(
-    (item) =>
-      item.category === product.category &&
-      item.slug !== slug &&
-      item.workshopSlug !== product.workshopSlug,
-  );
-
-  return [...sameWorkshop, ...sameCategory].slice(0, limit);
-}

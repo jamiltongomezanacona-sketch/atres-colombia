@@ -3,9 +3,17 @@
 import Image from "next/image";
 import { ZoomIn } from "lucide-react";
 import { useState } from "react";
+import type { Product } from "@/types/product";
+import { getProductGalleryImages } from "@/lib/products/helpers";
 
-export function ProductGallery({ name, images }: { name: string; images: string[] }) {
-  const [selectedImage, setSelectedImage] = useState(images[0]);
+type ProductGalleryProps = {
+  name: string;
+  product: Product;
+};
+
+export function ProductGallery({ name, product }: ProductGalleryProps) {
+  const images = getProductGalleryImages(product);
+  const [selectedImage, setSelectedImage] = useState(images[0]?.url ?? "");
   const [zoomed, setZoomed] = useState(false);
 
   return (
@@ -45,21 +53,21 @@ export function ProductGallery({ name, images }: { name: string; images: string[
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
         {images.map((image) => (
           <button
-            key={image}
+            key={image.id}
             type="button"
             aria-label={"Ver imagen de " + name}
             onClick={() => {
-              setSelectedImage(image);
+              setSelectedImage(image.url);
               setZoomed(false);
             }}
             className={
               "relative aspect-square cursor-pointer overflow-hidden rounded-xl border bg-atres-bg transition duration-200 hover:scale-105 " +
-              (image === selectedImage
+              (image.url === selectedImage
                 ? "border-atres-primary ring-2 ring-atres-primary/20"
                 : "border-atres-border")
             }
           >
-            <Image src={image} alt={name} fill sizes="80px" className="object-cover" />
+            <Image src={image.url} alt={image.alt} fill sizes="80px" className="object-cover" />
           </button>
         ))}
       </div>
