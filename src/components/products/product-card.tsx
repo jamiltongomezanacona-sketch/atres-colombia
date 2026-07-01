@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, ShoppingBag } from "lucide-react";
 import type { Product } from "@/types/product";
 import { useCart } from "@/hooks/use-cart";
 import { FavoriteButton } from "@/components/products/favorite-button";
+import { ProductBadges } from "@/components/products/product-badges";
 import { ProductMeta } from "@/components/products/product-meta";
 import { ProductPrice } from "@/components/products/product-price";
 import { PrimaryButton } from "@/components/ui/primary-button";
@@ -13,55 +14,71 @@ import { PrimaryButton } from "@/components/ui/primary-button";
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
 
+  const handleAdd = () => {
+    addItem({
+      product,
+      color: product.colors[0].name,
+      size: product.sizes[0],
+    });
+  };
+
   return (
-    <article className="overflow-hidden rounded-xl border border-atres-border bg-atres-panel/90 shadow-soft">
-      <Link
-        href={"/productos/" + product.slug}
-        className="relative block aspect-[4/5] w-full bg-white/5"
-      >
-        <Image
-          src={product.images[0]}
-          alt={product.name}
-          fill
-          sizes="(max-width: 768px) 100vw, 560px"
-          className="object-cover"
-        />
-        {product.discount ? (
-          <span className="absolute left-3 top-3 rounded-full bg-atres-gold px-2.5 py-1 text-xs font-bold text-atres-black">
-            -{product.discount}
-          </span>
-        ) : null}
-      </Link>
-      <div className="space-y-3 p-3.5">
-        <div className="flex items-start gap-2">
-          <Link href={"/productos/" + product.slug} className="min-w-0 flex-1">
-            <h3 className="text-base font-semibold leading-5 text-white">
-              {product.name}
-            </h3>
-            <p className="mt-1 line-clamp-2 text-sm leading-5 text-atres-muted">
-              {product.description}
-            </p>
-          </Link>
+    <article className="group overflow-hidden rounded-2xl border border-atres-border bg-atres-surface shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-card-hover">
+      <div className="relative">
+        <Link
+          href={"/productos/" + product.slug}
+          className="relative block aspect-[3/4] overflow-hidden rounded-t-2xl bg-atres-bg"
+        >
+          <Image
+            src={product.images[0]}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px"
+            className="object-cover transition duration-300 group-hover:scale-105"
+          />
+          <ProductBadges product={product} />
+        </Link>
+        <div className="absolute right-3 top-3">
           <FavoriteButton productId={product.id} />
         </div>
+      </div>
+
+      <div className="space-y-3 p-4">
+        <Link href={"/productos/" + product.slug} className="block">
+          <h3 className="line-clamp-1 text-sm font-semibold text-atres-text transition group-hover:text-atres-primary sm:text-base">
+            {product.name}
+          </h3>
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-atres-muted sm:text-sm">
+            {product.description}
+          </p>
+        </Link>
+
         <ProductPrice
           price={product.price}
           previousPrice={product.previousPrice}
+          discount={product.discount}
+          size="sm"
         />
+
         <ProductMeta colors={product.colors} sizes={product.sizes} />
-        <PrimaryButton
-          className="w-full"
-          onClick={() =>
-            addItem({
-              product,
-              color: product.colors[0].name,
-              size: product.sizes[0],
-            })
-          }
-        >
-          <Plus size={18} />
-          Agregar al carrito
-        </PrimaryButton>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <PrimaryButton
+            tone="ghost"
+            size="sm"
+            className="w-full"
+            onClick={handleAdd}
+          >
+            <Plus size={16} />
+            Agregar
+          </PrimaryButton>
+          <Link href={"/productos/" + product.slug} className="w-full">
+            <PrimaryButton tone="primary" size="sm" className="w-full">
+              <ShoppingBag size={16} />
+              Ver
+            </PrimaryButton>
+          </Link>
+        </div>
       </div>
     </article>
   );

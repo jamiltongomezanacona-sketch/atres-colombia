@@ -26,6 +26,9 @@ export const products: Product[] = [
     ],
     available: true,
     madeToOrder: true,
+    isNew: true,
+    material: "Algodon mezclado con poliester reciclado",
+    fabricationTime: "5 a 7 dias habiles",
   },
   {
     id: "prod-002",
@@ -50,6 +53,9 @@ export const products: Product[] = [
     ],
     available: true,
     madeToOrder: false,
+    isNew: true,
+    material: "Lino mezclado 55% lino, 45% algodon",
+    fabricationTime: "3 a 5 dias habiles",
   },
   {
     id: "prod-003",
@@ -76,6 +82,8 @@ export const products: Product[] = [
     ],
     available: true,
     madeToOrder: true,
+    material: "Algodon stretch con elastano",
+    fabricationTime: "4 a 6 dias habiles",
   },
   {
     id: "prod-004",
@@ -100,9 +108,25 @@ export const products: Product[] = [
     ],
     available: true,
     madeToOrder: false,
+    material: "Cuero vacuno colombiano con suela EVA",
+    fabricationTime: "Entrega inmediata desde taller",
   },
 ];
 
 export function getProductBySlug(slug: string) {
   return products.find((product) => product.slug === slug);
+}
+
+export function getRelatedProducts(slug: string, limit = 3) {
+  const product = getProductBySlug(slug);
+
+  if (!product) {
+    return [];
+  }
+
+  return products
+    .filter(
+      (item) => item.category === product.category && item.slug !== product.slug,
+    )
+    .slice(0, limit);
 }

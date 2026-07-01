@@ -2,12 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Menu, Search, ShoppingBag, X } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/hooks/use-cart";
 import { useCatalogFilterOptional } from "@/hooks/use-catalog-filter";
 import { useFavorites } from "@/hooks/use-favorites";
-import { IconButton } from "@/components/ui/icon-button";
+import { MobileMenu } from "@/components/layout/mobile-menu";
+
+function Badge({ count }: { count: number }) {
+  if (count <= 0) {
+    return null;
+  }
+
+  return (
+    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-atres-gold px-1 text-[10px] font-bold text-white">
+      {count}
+    </span>
+  );
+}
 
 export function Header() {
   const { count } = useCart();
@@ -15,7 +27,7 @@ export function Header() {
   const catalogFilter = useCatalogFilterOptional();
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const scrollToFavorites = () => {
     if (isHome) {
@@ -30,76 +42,117 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-atres-border/80 bg-atres-black/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
-        <IconButton label="Abrir menu">
-          <Menu size={20} />
-        </IconButton>
-        <Link
-          href="/"
-          className="min-w-0 flex-1 truncate text-base font-bold tracking-normal text-white sm:text-lg"
-        >
-          AtresColombia
-        </Link>
-        <div className="hidden min-w-56 flex-1 items-center gap-2 rounded-full border border-atres-border bg-white/5 px-3 py-2 text-atres-muted sm:flex md:min-w-64">
-          <Search size={17} />
-          <input
-            aria-label="Buscar productos"
-            placeholder="Buscar prendas"
-            value={catalogFilter?.query ?? ""}
-            onChange={(event) => catalogFilter?.setQuery(event.target.value)}
-            disabled={!catalogFilter}
-            className="w-full bg-transparent text-sm text-white outline-none placeholder:text-atres-muted disabled:cursor-not-allowed disabled:opacity-60"
-          />
-        </div>
-        <IconButton
-          label={mobileSearchOpen ? "Cerrar busqueda" : "Buscar"}
-          className="sm:hidden"
-          onClick={() => setMobileSearchOpen((current) => !current)}
-        >
-          {mobileSearchOpen ? <X size={19} /> : <Search size={19} />}
-        </IconButton>
-        <IconButton
-          label="Favoritos"
-          onClick={scrollToFavorites}
-          className="relative"
-        >
-          <Heart size={19} />
-          {favoritesCount > 0 ? (
-            <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-atres-gold px-1 text-center text-[10px] font-bold text-atres-black">
-              {favoritesCount}
-            </span>
-          ) : null}
-        </IconButton>
-        <Link
-          href="/carrito"
-          aria-label="Carrito"
-          title="Carrito"
-          className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-atres-border bg-white/5 text-white transition hover:border-atres-green hover:text-atres-green"
-        >
-          <ShoppingBag size={19} />
-          {count > 0 ? (
-            <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-atres-gold px-1 text-center text-[10px] font-bold text-atres-black">
-              {count}
-            </span>
-          ) : null}
-        </Link>
-      </div>
-      {mobileSearchOpen ? (
-        <div className="border-t border-atres-border/70 px-3 pb-3 pt-2 sm:hidden">
-          <div className="flex items-center gap-2 rounded-full border border-atres-border bg-white/5 px-3 py-2">
-            <Search size={17} className="text-atres-muted" />
-            <input
-              aria-label="Buscar productos"
-              placeholder="Buscar prendas"
-              value={catalogFilter?.query ?? ""}
-              onChange={(event) => catalogFilter?.setQuery(event.target.value)}
-              disabled={!catalogFilter}
-              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-atres-muted disabled:cursor-not-allowed disabled:opacity-60"
-            />
+    <>
+      <header className="border-b border-atres-border bg-atres-surface shadow-header">
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
+          {/* Mobile layout */}
+          <div className="flex items-center gap-3 lg:hidden">
+            <button
+              type="button"
+              aria-label="Abrir menu"
+              onClick={() => setMenuOpen(true)}
+              className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-atres-text transition hover:bg-atres-bg hover:text-atres-primary"
+            >
+              <Menu size={22} />
+            </button>
+            <Link
+              href="/"
+              className="min-w-0 flex-1 truncate text-lg font-bold text-atres-primary"
+            >
+              AtresColombia
+            </Link>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                aria-label="Favoritos"
+                onClick={scrollToFavorites}
+                className="relative inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-atres-text transition hover:bg-atres-bg hover:text-atres-primary"
+              >
+                <Heart size={20} />
+                <Badge count={favoritesCount} />
+              </button>
+              <Link
+                href="/carrito"
+                aria-label="Carrito"
+                className="relative inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-atres-text transition hover:bg-atres-bg hover:text-atres-primary"
+              >
+                <ShoppingBag size={20} />
+                <Badge count={count} />
+              </Link>
+              <Link
+                href="/nosotros"
+                aria-label="Perfil"
+                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-atres-text transition hover:bg-atres-bg hover:text-atres-primary"
+              >
+                <UserRound size={20} />
+              </Link>
+            </div>
+          </div>
+
+          {/* Mobile search */}
+          <div className="mt-3 lg:hidden">
+            <div className="flex items-center gap-2 rounded-xl border border-atres-border bg-atres-bg px-3 py-2.5">
+              <Search size={18} className="shrink-0 text-atres-muted" />
+              <input
+                aria-label="Buscar productos"
+                placeholder="Buscar prendas, categorias..."
+                value={catalogFilter?.query ?? ""}
+                onChange={(event) => catalogFilter?.setQuery(event.target.value)}
+                disabled={!catalogFilter}
+                className="w-full bg-transparent text-sm text-atres-text outline-none placeholder:text-atres-muted disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+          </div>
+
+          {/* Desktop layout */}
+          <div className="hidden items-center gap-6 lg:flex">
+            <Link
+              href="/"
+              className="shrink-0 text-xl font-bold tracking-tight text-atres-primary"
+            >
+              AtresColombia
+            </Link>
+            <div className="mx-auto flex w-full max-w-xl items-center gap-2 rounded-xl border border-atres-border bg-atres-bg px-4 py-3">
+              <Search size={18} className="shrink-0 text-atres-muted" />
+              <input
+                aria-label="Buscar productos"
+                placeholder="Buscar prendas, categorias, colores..."
+                value={catalogFilter?.query ?? ""}
+                onChange={(event) => catalogFilter?.setQuery(event.target.value)}
+                disabled={!catalogFilter}
+                className="w-full bg-transparent text-sm text-atres-text outline-none placeholder:text-atres-muted disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                aria-label="Favoritos"
+                onClick={scrollToFavorites}
+                className="relative inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-atres-text transition hover:bg-atres-bg hover:text-atres-primary"
+              >
+                <Heart size={20} />
+                <Badge count={favoritesCount} />
+              </button>
+              <Link
+                href="/carrito"
+                aria-label="Carrito"
+                className="relative inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-atres-text transition hover:bg-atres-bg hover:text-atres-primary"
+              >
+                <ShoppingBag size={20} />
+                <Badge count={count} />
+              </Link>
+              <Link
+                href="/nosotros"
+                aria-label="Perfil"
+                className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-atres-text transition hover:bg-atres-bg hover:text-atres-primary"
+              >
+                <UserRound size={20} />
+              </Link>
+            </div>
           </div>
         </div>
-      ) : null}
-    </header>
+      </header>
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+    </>
   );
 }

@@ -28,19 +28,19 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
   };
 
   return (
-    <section
-      id="categorias"
-      className="sticky top-[3.35rem] z-30 -mx-4 border-b border-atres-border/70 bg-atres-black/95 px-4 py-3 backdrop-blur md:top-[3.5rem]"
-    >
-      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <section id="categorias" className="scroll-mt-36 space-y-3">
+      <h2 className="text-lg font-bold text-atres-text sm:text-xl">
+        Explora por categoria
+      </h2>
+      <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
         <button
           type="button"
           onClick={() => handleSelect(null)}
           className={
-            "whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition " +
+            "shrink-0 cursor-pointer whitespace-nowrap rounded-full border px-5 py-2.5 text-sm font-semibold transition duration-200 " +
             (activeCategory === null
-              ? "border-atres-green bg-atres-green text-atres-black"
-              : "border-atres-border bg-atres-panel text-white hover:border-atres-green hover:text-atres-green")
+              ? "border-atres-primary bg-atres-primary text-white"
+              : "border-atres-border bg-atres-surface text-atres-text hover:border-atres-primary hover:text-atres-primary")
           }
         >
           Todas
@@ -51,10 +51,10 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
             type="button"
             onClick={() => handleSelect(category.id)}
             className={
-              "whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition " +
+              "shrink-0 cursor-pointer whitespace-nowrap rounded-full border px-5 py-2.5 text-sm font-semibold transition duration-200 " +
               (activeCategory === category.id
-                ? "border-atres-green bg-atres-green text-atres-black"
-                : "border-atres-border bg-atres-panel text-white hover:border-atres-green hover:text-atres-green")
+                ? "border-atres-primary bg-atres-primary text-white"
+                : "border-atres-border bg-atres-surface text-atres-text hover:border-atres-primary hover:text-atres-primary")
             }
           >
             {category.name}

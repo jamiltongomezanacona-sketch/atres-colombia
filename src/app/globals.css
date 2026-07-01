@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -17,11 +17,11 @@ html {
 body {
   min-width: 320px;
   margin: 0;
-  background:
-    radial-gradient(circle at top left, rgba(24, 196, 119, 0.11), transparent 32rem),
-    linear-gradient(180deg, #050706 0%, #07140f 44%, #050706 100%);
-  color: #f3f7f1;
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f8f8f8;
+  color: #1a1a1a;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -35,5 +35,17 @@ input {
 }
 
 ::selection {
-  background: rgba(24, 196, 119, 0.35);
+  background: rgba(20, 61, 43, 0.15);
+  color: #1a1a1a;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

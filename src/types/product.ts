@@ -19,6 +19,9 @@ export type Product = {
   images: string[];
   available: boolean;
   madeToOrder: boolean;
+  isNew?: boolean;
+  material?: string;
+  fabricationTime?: string;
 };
 
 export type CartItem = {

@@ -6,7 +6,7 @@ export function ColorDots({ colors }: { colors: ProductColor[] }) {
       {colors.map((color) => (
         <span
           key={color.name}
-          className="h-4 w-4 rounded-full border border-white/30"
+          className="h-4 w-4 rounded-full border border-atres-border"
           style={{ backgroundColor: color.value }}
           title={color.name}
         />

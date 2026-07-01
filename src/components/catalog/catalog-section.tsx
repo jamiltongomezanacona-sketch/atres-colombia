@@ -13,22 +13,21 @@ export function CatalogSection({ category, products }: CatalogSectionProps) {
   }
 
   return (
-    <section
-      id={category.id}
-      className="scroll-mt-[8.75rem] space-y-3 md:scroll-mt-28"
-    >
-      <div className="flex items-end justify-between gap-3 border-b border-atres-border/70 pb-2">
+    <section id={category.id} className="scroll-mt-36 space-y-5">
+      <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-atres-gold">
-            Categoria
+          <p className="text-xs font-semibold uppercase tracking-wider text-atres-gold">
+            Coleccion
           </p>
-          <h2 className="text-xl font-bold text-white">{category.name}</h2>
+          <h2 className="text-xl font-bold text-atres-text sm:text-2xl">
+            {category.name}
+          </h2>
         </div>
-        <span className="rounded-full border border-atres-border px-2.5 py-1 text-xs text-atres-muted">
+        <span className="rounded-full bg-atres-bg px-3 py-1 text-xs font-medium text-atres-muted">
           {products.length} {products.length === 1 ? "prenda" : "prendas"}
         </span>
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}

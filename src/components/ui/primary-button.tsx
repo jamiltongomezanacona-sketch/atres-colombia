@@ -2,26 +2,39 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 type PrimaryButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
-  tone?: "green" | "gold" | "dark";
+  tone?: "primary" | "gold" | "outline" | "ghost";
+  size?: "sm" | "md";
 };
 
 const tones = {
-  green: "border-atres-green bg-atres-green text-atres-black hover:bg-emerald-300",
-  gold: "border-atres-gold bg-atres-gold text-atres-black hover:bg-amber-200",
-  dark: "border-atres-border bg-white/5 text-white hover:border-atres-green",
+  primary:
+    "border-atres-primary bg-atres-primary text-white hover:border-atres-primary-hover hover:bg-atres-primary-hover",
+  gold: "border-atres-gold bg-atres-gold text-white hover:brightness-110",
+  outline:
+    "border-white/80 bg-transparent text-white hover:border-white hover:bg-white/10",
+  ghost:
+    "border-atres-border bg-atres-surface text-atres-text hover:border-atres-primary hover:text-atres-primary",
+};
+
+const sizes = {
+  sm: "min-h-9 px-4 text-xs",
+  md: "min-h-11 px-5 text-sm",
 };
 
 export function PrimaryButton({
   children,
   className = "",
-  tone = "green",
+  tone = "primary",
+  size = "md",
   ...props
 }: PrimaryButtonProps) {
   return (
     <button
       className={
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border px-5 text-sm font-semibold transition " +
+        "inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border font-semibold transition duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 " +
         tones[tone] +
+        " " +
+        sizes[size] +
         " " +
         className
       }
