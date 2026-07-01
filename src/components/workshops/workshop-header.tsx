@@ -10,6 +10,7 @@ import {
   Star,
 } from "lucide-react";
 import type { Workshop } from "@/types/workshop";
+import { getVerifiedLabel } from "@/lib/workshops/helpers";
 import { PrimaryButton } from "@/components/shared";
 
 type WorkshopHeaderProps = {
@@ -29,6 +30,7 @@ export function WorkshopHeader({
     ? "https://wa.me/" + workshop.whatsapp
     : "#";
   const catalogHref = "/talleres/" + workshop.slug + "/catalogo";
+  const verifiedLabel = getVerifiedLabel(workshop);
 
   return (
     <section className="space-y-5">
@@ -82,7 +84,7 @@ export function WorkshopHeader({
             {workshop.verified ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-atres-primary/10 px-3 py-1.5 text-xs font-semibold text-atres-primary">
                 <BadgeCheck size={14} />
-                Taller verificado
+                {verifiedLabel}
               </span>
             ) : null}
             <span className="inline-flex items-center gap-1 rounded-full bg-atres-bg px-3 py-1.5 text-xs font-medium text-atres-muted">

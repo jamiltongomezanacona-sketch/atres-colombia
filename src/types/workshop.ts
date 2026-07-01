@@ -4,12 +4,15 @@ export type WorkshopSocials = {
   tiktok?: string;
 };
 
+export type WorkshopKind = "workshop" | "store";
+
 export type WorkshopStatus = "active" | "pending" | "inactive";
 
 export type Workshop = {
   id: string;
   slug: string;
   name: string;
+  kind: WorkshopKind;
   verified: boolean;
   location: string;
   city: string;

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Star, BadgeCheck } from "lucide-react";
 import type { Workshop } from "@/types/workshop";
+import { getVerifiedLabel } from "@/lib/workshops/helpers";
 import { PrimaryButton } from "@/components/shared";
 
 type WorkshopCardProps = {
@@ -10,6 +11,7 @@ type WorkshopCardProps = {
 
 export function WorkshopCard({ workshop }: WorkshopCardProps) {
   const catalogHref = "/talleres/" + workshop.slug + "/catalogo";
+  const verifiedLabel = getVerifiedLabel(workshop);
 
   return (
     <article className="group overflow-hidden rounded-2xl border border-atres-border bg-atres-surface shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-card-hover">
@@ -38,7 +40,7 @@ export function WorkshopCard({ workshop }: WorkshopCardProps) {
           {workshop.verified ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-atres-primary/90 px-2.5 py-1 text-[10px] font-semibold text-white">
               <BadgeCheck size={12} />
-              Taller verificado
+              {verifiedLabel}
             </span>
           ) : null}
         </div>

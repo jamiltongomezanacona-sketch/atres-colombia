@@ -9,6 +9,7 @@ export type {
 } from "@/types/product";
 export type {
   Workshop,
+  WorkshopKind,
   WorkshopRecord,
   WorkshopSocials,
   WorkshopStatus,
