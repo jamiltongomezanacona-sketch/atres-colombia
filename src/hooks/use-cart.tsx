@@ -17,7 +17,12 @@ import {
   groupCartItemsByWorkshop,
 } from "@/lib/cart/helpers";
 import { getPrimaryImageUrl } from "@/lib/products/helpers";
-import { getProductBySlug, getWorkshopBySlug } from "@/lib/repositories";
+import {
+  getAllProductsAsync,
+  getAllWorkshopsAsync,
+  getProductBySlug,
+  getWorkshopBySlug,
+} from "@/lib/repositories";
 
 type AddToCartInput = {
   product: Product;
@@ -75,6 +80,11 @@ function migrateCartItems(items: CartItem[]): CartItem[] {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    void getAllProductsAsync();
+    void getAllWorkshopsAsync();
+  }, []);
 
   useEffect(() => {
     const storedCart = window.localStorage.getItem(STORAGE_KEY);

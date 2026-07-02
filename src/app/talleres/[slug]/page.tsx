@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { WorkshopProfile } from "@/components/workshops/workshop-profile";
 import {
-  getWorkshopBySlug,
-  getWorkshopSlugs,
+  getWorkshopBySlugAsync,
+  getWorkshopSlugsAsync,
 } from "@/lib/repositories";
 
 type WorkshopPageProps = {
@@ -11,13 +11,14 @@ type WorkshopPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return getWorkshopSlugs().map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  const slugs = await getWorkshopSlugsAsync();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export default async function WorkshopPage({ params }: WorkshopPageProps) {
   const { slug } = await params;
-  const workshop = getWorkshopBySlug(slug);
+  const workshop = await getWorkshopBySlugAsync(slug);
 
   if (!workshop) {
     notFound();

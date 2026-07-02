@@ -30,4 +30,5 @@ export {
   getWorkshopBySlug,
   getWorkshopBySlugAsync,
   getWorkshopSlugs,
+  getWorkshopSlugsAsync,
 } from "@/lib/repositories/workshop-repository";

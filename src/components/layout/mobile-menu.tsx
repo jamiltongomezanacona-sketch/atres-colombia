@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { getAllCategories } from "@/lib/repositories/category-repository";
-import { getAllWorkshops } from "@/lib/repositories/workshop-repository";
+import { getAllWorkshops, getAllWorkshopsAsync } from "@/lib/repositories/workshop-repository";
+import type { Workshop } from "@/types/workshop";
 
 type MobileMenuProps = {
   open: boolean;
@@ -19,11 +21,16 @@ const menuLinks = [
 ];
 
 export function MobileMenu({ open, onClose }: MobileMenuProps) {
+  const [workshops, setWorkshops] = useState<Workshop[]>(() => getAllWorkshops());
+
+  useEffect(() => {
+    void getAllWorkshopsAsync().then(setWorkshops);
+  }, []);
+
   if (!open) {
     return null;
   }
 
-  const workshops = getAllWorkshops();
   const categories = getAllCategories();
 
   return (

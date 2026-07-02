@@ -3,7 +3,7 @@ import { WorkshopCatalogView } from "@/components/workshops/workshop-catalog-vie
 import {
   getProductsByWorkshopSlugAsync,
   getWorkshopBySlugAsync,
-  getWorkshopSlugs,
+  getWorkshopSlugsAsync,
 } from "@/lib/repositories";
 
 type WorkshopCatalogPageProps = {
@@ -12,8 +12,9 @@ type WorkshopCatalogPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return getWorkshopSlugs().map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  const slugs = await getWorkshopSlugsAsync();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export default async function WorkshopCatalogPage({

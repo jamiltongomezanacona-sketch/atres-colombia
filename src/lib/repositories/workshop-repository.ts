@@ -7,66 +7,130 @@ import {
 } from "@/lib/repositories/product-repository";
 import { filterProducts } from "@/lib/catalog";
 import type { Product } from "@/types/product";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { fetchWorkshopsFromSupabase } from "@/lib/supabase/fetch-workshops";
+
+let seedCache: Workshop[] | null = null;
+let asyncCache: Workshop[] | null = null;
+let asyncLoadPromise: Promise<Workshop[]> | null = null;
 
 function enrichWorkshop(record: WorkshopRecord, products?: Product[]): Workshop {
+  const workshopProducts = products
+    ? products.filter((product) => product.workshopSlug === record.slug)
+    : [];
+
+  const categories =
+    workshopProducts.length > 0
+      ? [...new Set(workshopProducts.map((product) => product.categoryId))]
+      : record.categories;
+
+  const specialties =
+    workshopProducts.length > 0
+      ? [...new Set(workshopProducts.map((product) => product.categoryName))]
+      : record.specialties;
+
   const productCount = products
-    ? products.filter((product) => product.workshopSlug === record.slug).length
+    ? workshopProducts.length
     : countProductsByWorkshopId(record.id);
 
   return {
     ...record,
+    categories,
+    specialties,
     productCount,
   };
 }
 
-/** Punto unico de lectura de talleres (futuro: Supabase). */
-export async function getAllWorkshopsAsync(): Promise<Workshop[]> {
+function loadWorkshopsFromSeeds(products?: Product[]): Workshop[] {
+  if (!seedCache || products) {
+    seedCache = workshopRecords
+      .filter((record) => record.status === "active")
+      .map((record) => enrichWorkshop(record, products));
+  }
+
+  return seedCache;
+}
+
+async function loadWorkshopsAsync(): Promise<Workshop[]> {
   const products = await getAllProductsAsync();
 
-  return workshopRecords
-    .filter((record) => record.status === "active")
-    .map((record) => enrichWorkshop(record, products));
+  if (!isSupabaseConfigured()) {
+    console.log("Usando datos locales");
+    return loadWorkshopsFromSeeds(products);
+  }
+
+  try {
+    const records = await fetchWorkshopsFromSupabase();
+
+    if (records.length > 0) {
+      console.log("Leyendo datos desde Supabase");
+      return records.map((record) => enrichWorkshop(record, products));
+    }
+  } catch (error) {
+    console.warn("[AtresColombia] Supabase workshops fallback to seeds.", error);
+  }
+
+  console.log("Usando datos locales");
+  return loadWorkshopsFromSeeds(products);
+}
+
+function getWorkshopSource(products?: Product[]): Workshop[] {
+  if (asyncCache) {
+    return asyncCache;
+  }
+
+  console.log("Usando datos locales");
+  return loadWorkshopsFromSeeds(products);
+}
+
+/** Punto unico de lectura de talleres desde Supabase con fallback a seeds. */
+export async function getAllWorkshopsAsync(): Promise<Workshop[]> {
+  if (asyncCache) {
+    return asyncCache;
+  }
+
+  if (!asyncLoadPromise) {
+    asyncLoadPromise = loadWorkshopsAsync().then((workshops) => {
+      asyncCache = workshops;
+      return workshops;
+    });
+  }
+
+  return asyncLoadPromise;
 }
 
 export function getAllWorkshops(): Workshop[] {
-  return workshopRecords
-    .filter((record) => record.status === "active")
-    .map((record) => enrichWorkshop(record));
+  return getWorkshopSource();
 }
 
 export function getWorkshopBySlug(slug: string): Workshop | undefined {
-  const record = workshopRecords.find(
+  const workshops = getWorkshopSource();
+  return workshops.find(
     (workshop) => workshop.slug === slug && workshop.status === "active",
   );
-
-  return record ? enrichWorkshop(record) : undefined;
 }
 
 export async function getWorkshopBySlugAsync(slug: string): Promise<Workshop | undefined> {
-  const record = workshopRecords.find(
+  const workshops = await getAllWorkshopsAsync();
+  return workshops.find(
     (workshop) => workshop.slug === slug && workshop.status === "active",
   );
-
-  if (!record) {
-    return undefined;
-  }
-
-  const products = await getAllProductsAsync();
-  return enrichWorkshop(record, products);
 }
 
 export function getWorkshopById(id: string): Workshop | undefined {
-  const record = workshopRecords.find(
+  const workshops = getWorkshopSource();
+  return workshops.find(
     (workshop) => workshop.id === id && workshop.status === "active",
   );
-
-  return record ? enrichWorkshop(record) : undefined;
 }
 
 export function getWorkshopSlugs(): string[] {
-  return workshopRecords
-    .filter((record) => record.status === "active")
-    .map((record) => record.slug);
+  return getWorkshopSource().map((workshop) => workshop.slug);
+}
+
+export async function getWorkshopSlugsAsync(): Promise<string[]> {
+  const workshops = await getAllWorkshopsAsync();
+  return workshops.map((workshop) => workshop.slug);
 }
 
 export function filterWorkshops(workshops: Workshop[], query: string): Workshop[] {

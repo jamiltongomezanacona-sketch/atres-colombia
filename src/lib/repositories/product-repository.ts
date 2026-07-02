@@ -16,8 +16,18 @@ function loadProductsFromSeeds(): Product[] {
   return seedCache;
 }
 
+function getProductSource(): Product[] {
+  if (asyncCache) {
+    return asyncCache;
+  }
+
+  console.log("Usando datos locales");
+  return loadProductsFromSeeds();
+}
+
 async function loadProductsAsync(): Promise<Product[]> {
   if (!isSupabaseConfigured()) {
+    console.log("Usando datos locales");
     return loadProductsFromSeeds();
   }
 
@@ -25,12 +35,14 @@ async function loadProductsAsync(): Promise<Product[]> {
     const products = await fetchProductsFromSupabase();
 
     if (products.length > 0) {
+      console.log("Leyendo datos desde Supabase");
       return products;
     }
   } catch (error) {
     console.warn("[AtresColombia] Supabase products fallback to seeds.", error);
   }
 
+  console.log("Usando datos locales");
   return loadProductsFromSeeds();
 }
 
@@ -50,9 +62,9 @@ export async function getAllProductsAsync(): Promise<Product[]> {
   return asyncLoadPromise;
 }
 
-/** Lectura sincrona desde seeds (cliente, carrito, panel). */
+/** Lectura sincrona usando cache de Supabase o fallback a seeds. */
 export function getAllProducts(): Product[] {
-  return loadProductsFromSeeds();
+  return getProductSource();
 }
 
 export async function getProductBySlugAsync(
@@ -63,7 +75,7 @@ export async function getProductBySlugAsync(
 }
 
 export function getProductBySlug(slug: string): Product | undefined {
-  return loadProductsFromSeeds().find((product) => product.slug === slug);
+  return getProductSource().find((product) => product.slug === slug);
 }
 
 export async function getProductsByWorkshopSlugAsync(
@@ -74,13 +86,13 @@ export async function getProductsByWorkshopSlugAsync(
 }
 
 export function getProductsByWorkshopSlug(workshopSlug: string): Product[] {
-  return loadProductsFromSeeds().filter(
+  return getProductSource().filter(
     (product) => product.workshopSlug === workshopSlug,
   );
 }
 
 export function getProductsByWorkshopId(workshopId: string): Product[] {
-  return loadProductsFromSeeds().filter(
+  return getProductSource().filter(
     (product) => product.workshopId === workshopId,
   );
 }
@@ -102,7 +114,7 @@ export async function getProductSlugsAsync(): Promise<string[]> {
 }
 
 export function getProductSlugs(): string[] {
-  return loadProductsFromSeeds().map((product) => product.slug);
+  return getProductSource().map((product) => product.slug);
 }
 
 export async function getSameWorkshopProductsAsync(
@@ -159,7 +171,7 @@ export function getSuggestedProducts(slug: string, limit = 4): Product[] {
     return [];
   }
 
-  return loadProductsFromSeeds()
+  return getProductSource()
     .filter(
       (item) =>
         item.slug !== slug &&
@@ -184,7 +196,7 @@ export function getRelatedProducts(slug: string, limit = 3): Product[] {
     return sameWorkshop.slice(0, limit);
   }
 
-  const sameCategory = loadProductsFromSeeds().filter(
+  const sameCategory = getProductSource().filter(
     (item) =>
       item.categoryId === product.categoryId &&
       item.slug !== slug &&
