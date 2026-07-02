@@ -5,22 +5,20 @@
 --
 -- Ejecutar en Supabase SQL Editor DESPUES de schema.sql y seed.sql.
 --
--- Incluye:
---   - RLS habilitado en workshops, products, categories, product_images,
---     product_variants
---   - Policies SELECT para roles anon y authenticated
---   - Sin policies INSERT / UPDATE / DELETE (fase posterior)
+-- Tablas: workshops, products, categories, product_images, product_variants, brands
+-- Roles:  anon, authenticated
+-- Solo SELECT publico. Sin INSERT / UPDATE / DELETE.
 --
 -- Reglas:
---   workshops  → solo status = 'active'
---   products   → solo status = 'active'
---   demas tablas → solo registros vinculados a productos activos
+--   workshops → status = 'active' (si existe la columna; si no, lectura total)
+--   products  → status = 'active' (si existe la columna; si no, lectura total)
+--   demas     → lectura publica completa
 -- =============================================================================
 
 BEGIN;
 
 -- -----------------------------------------------------------------------------
--- 1. Habilitar RLS
+-- 1. Habilitar RLS (idempotente)
 -- -----------------------------------------------------------------------------
 
 ALTER TABLE public.workshops        ENABLE ROW LEVEL SECURITY;
@@ -28,9 +26,10 @@ ALTER TABLE public.products         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.product_images   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.product_variants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.brands           ENABLE ROW LEVEL SECURITY;
 
 -- -----------------------------------------------------------------------------
--- 2. Grants de lectura (idempotente; Supabase suele tenerlos, se reafirman)
+-- 2. Grants de lectura
 -- -----------------------------------------------------------------------------
 
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
@@ -40,155 +39,166 @@ GRANT SELECT ON public.products         TO anon, authenticated;
 GRANT SELECT ON public.categories       TO anon, authenticated;
 GRANT SELECT ON public.product_images   TO anon, authenticated;
 GRANT SELECT ON public.product_variants TO anon, authenticated;
+GRANT SELECT ON public.brands           TO anon, authenticated;
 
 -- -----------------------------------------------------------------------------
 -- 3. Eliminar policies previas (re-ejecucion segura)
 -- -----------------------------------------------------------------------------
 
+DROP POLICY IF EXISTS "anon_authenticated_select_workshops"
+  ON public.workshops;
 DROP POLICY IF EXISTS "anon_authenticated_select_active_workshops"
   ON public.workshops;
 
+DROP POLICY IF EXISTS "anon_authenticated_select_products"
+  ON public.products;
 DROP POLICY IF EXISTS "anon_authenticated_select_active_products"
   ON public.products;
 
+DROP POLICY IF EXISTS "anon_authenticated_select_categories"
+  ON public.categories;
 DROP POLICY IF EXISTS "anon_authenticated_select_categories_of_active_products"
   ON public.categories;
 
+DROP POLICY IF EXISTS "anon_authenticated_select_product_images"
+  ON public.product_images;
 DROP POLICY IF EXISTS "anon_authenticated_select_images_of_active_products"
   ON public.product_images;
 
+DROP POLICY IF EXISTS "anon_authenticated_select_product_variants"
+  ON public.product_variants;
 DROP POLICY IF EXISTS "anon_authenticated_select_variants_of_active_products"
   ON public.product_variants;
 
--- -----------------------------------------------------------------------------
--- 4. Policies SELECT — workshops
--- -----------------------------------------------------------------------------
-
-CREATE POLICY "anon_authenticated_select_active_workshops"
-  ON public.workshops
-  FOR SELECT
-  TO anon, authenticated
-  USING (status = 'active');
-
-COMMENT ON POLICY "anon_authenticated_select_active_workshops"
-  ON public.workshops IS
-  'Lectura publica de talleres activos para catalogo y listados.';
+DROP POLICY IF EXISTS "anon_authenticated_select_brands"
+  ON public.brands;
 
 -- -----------------------------------------------------------------------------
--- 5. Policies SELECT — products
+-- 4. Helper: detectar columna status en una tabla
 -- -----------------------------------------------------------------------------
 
-CREATE POLICY "anon_authenticated_select_active_products"
-  ON public.products
-  FOR SELECT
-  TO anon, authenticated
-  USING (status = 'active');
-
-COMMENT ON POLICY "anon_authenticated_select_active_products"
-  ON public.products IS
-  'Lectura publica de productos activos para ficha y listados.';
+CREATE OR REPLACE FUNCTION public._rls_column_exists(
+  p_table  TEXT,
+  p_column TEXT
+)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns c
+    WHERE c.table_schema = 'public'
+      AND c.table_name   = p_table
+      AND c.column_name  = p_column
+  );
+$$;
 
 -- -----------------------------------------------------------------------------
--- 6. Policies SELECT — categories (solo las usadas por productos activos)
+-- 5. Policies SELECT — workshops
 -- -----------------------------------------------------------------------------
 
-CREATE POLICY "anon_authenticated_select_categories_of_active_products"
+DO $policy$
+BEGIN
+  IF public._rls_column_exists('workshops', 'status') THEN
+    EXECUTE $sql$
+      CREATE POLICY "anon_authenticated_select_workshops"
+        ON public.workshops
+        FOR SELECT
+        TO anon, authenticated
+        USING (status = 'active')
+    $sql$;
+  ELSE
+    EXECUTE $sql$
+      CREATE POLICY "anon_authenticated_select_workshops"
+        ON public.workshops
+        FOR SELECT
+        TO anon, authenticated
+        USING (true)
+    $sql$;
+  END IF;
+END;
+$policy$;
+
+-- -----------------------------------------------------------------------------
+-- 6. Policies SELECT — products
+-- -----------------------------------------------------------------------------
+
+DO $policy$
+BEGIN
+  IF public._rls_column_exists('products', 'status') THEN
+    EXECUTE $sql$
+      CREATE POLICY "anon_authenticated_select_products"
+        ON public.products
+        FOR SELECT
+        TO anon, authenticated
+        USING (status = 'active')
+    $sql$;
+  ELSE
+    EXECUTE $sql$
+      CREATE POLICY "anon_authenticated_select_products"
+        ON public.products
+        FOR SELECT
+        TO anon, authenticated
+        USING (true)
+    $sql$;
+  END IF;
+END;
+$policy$;
+
+-- -----------------------------------------------------------------------------
+-- 7. Policies SELECT — lectura publica completa
+-- -----------------------------------------------------------------------------
+
+CREATE POLICY "anon_authenticated_select_categories"
   ON public.categories
   FOR SELECT
   TO anon, authenticated
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM public.products p
-      WHERE p.category_id = categories.id
-        AND p.status = 'active'
-    )
-  );
+  USING (true);
 
-COMMENT ON POLICY "anon_authenticated_select_categories_of_active_products"
-  ON public.categories IS
-  'Solo categorias referenciadas por al menos un producto activo.';
-
--- -----------------------------------------------------------------------------
--- 7. Policies SELECT — product_images (solo de productos activos)
--- -----------------------------------------------------------------------------
-
-CREATE POLICY "anon_authenticated_select_images_of_active_products"
+CREATE POLICY "anon_authenticated_select_product_images"
   ON public.product_images
   FOR SELECT
   TO anon, authenticated
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM public.products p
-      WHERE p.id = product_images.product_id
-        AND p.status = 'active'
-    )
-  );
+  USING (true);
 
-COMMENT ON POLICY "anon_authenticated_select_images_of_active_products"
-  ON public.product_images IS
-  'Galeria visible solo para productos con status active.';
-
--- -----------------------------------------------------------------------------
--- 8. Policies SELECT — product_variants (solo de productos activos)
--- -----------------------------------------------------------------------------
-
-CREATE POLICY "anon_authenticated_select_variants_of_active_products"
+CREATE POLICY "anon_authenticated_select_product_variants"
   ON public.product_variants
   FOR SELECT
   TO anon, authenticated
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM public.products p
-      WHERE p.id = product_variants.product_id
-        AND p.status = 'active'
-    )
-  );
+  USING (true);
 
-COMMENT ON POLICY "anon_authenticated_select_variants_of_active_products"
-  ON public.product_variants IS
-  'Variantes visibles solo para productos con status active.';
+CREATE POLICY "anon_authenticated_select_brands"
+  ON public.brands
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
 
 COMMIT;
 
 -- =============================================================================
--- 9. Consultas de prueba — simular rol anon
+-- 8. Consultas de prueba — simular rol anon
 -- =============================================================================
--- El SQL Editor ejecuta como postgres y omite RLS por defecto.
--- SET ROLE anon fuerza las mismas restricciones que la app con publishable key.
+-- El SQL Editor corre como postgres y omite RLS por defecto.
+-- SET LOCAL ROLE anon aplica las mismas reglas que la publishable key.
 -- =============================================================================
 
 BEGIN;
 
 SET LOCAL ROLE anon;
 
-SELECT count(*) AS workshops_visibles_anon
-FROM public.workshops;
-
-SELECT count(*) AS products_visibles_anon
-FROM public.products;
-
--- Opcional: verificar tablas relacionadas
-SELECT count(*) AS categories_visibles_anon
-FROM public.categories;
-
-SELECT count(*) AS product_images_visibles_anon
-FROM public.product_images;
-
-SELECT count(*) AS product_variants_visibles_anon
-FROM public.product_variants;
+SELECT count(*) FROM public.workshops;
+SELECT count(*) FROM public.products;
 
 RESET ROLE;
 
 COMMIT;
 
 -- =============================================================================
--- Resultado esperado tras seed.sql (valores de referencia):
---   workshops_visibles_anon        → 5
---   products_visibles_anon         → 30
---   categories_visibles_anon       → 7
---   product_images_visibles_anon   → 90
---   product_variants_visibles_anon → 90
+-- Resultado esperado tras schema v1.1 + seed.sql:
+--   workshops → 5  (solo status = 'active')
+--   products  → 30 (solo status = 'active')
 -- =============================================================================
+
+-- Limpieza opcional de la funcion auxiliar (descomentar si se desea):
+-- DROP FUNCTION IF EXISTS public._rls_column_exists(TEXT, TEXT);
