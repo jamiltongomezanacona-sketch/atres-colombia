@@ -2,6 +2,8 @@
 
 Documentación del esquema definido en [`supabase/schema.sql`](./supabase/schema.sql).
 
+**Versión actual:** v1.1
+
 AtresColombia **no es un marketplace de marcas**. Es una plataforma donde cada **taller o tienda** publica su propio catálogo. La entidad raíz del negocio es `workshops`.
 
 Este documento explica el propósito de cada tabla y cómo el modelo escala cuando la plataforma crezca a cientos de talleres.
@@ -111,18 +113,22 @@ Centraliza precio, stock agregado, estado de publicación y flags de servicios.
 | Campo | Uso |
 |-------|-----|
 | `slug` | URL: `/productos/chaqueta-bogota-verde` |
-| `short_description` | Tarjetas y listado vertical |
-| `description` | Detalle del producto |
-| `compare_price` | Precio tachado / descuento |
+| `short_description` | Tarjetas y listado vertical → `Product.description` |
+| `description` | Detalle del producto → `Product.longDescription` |
+| `compare_price` | Precio tachado → `Product.previousPrice` |
+| `available` | Disponibilidad general en UI |
+| `made_to_order` | Fabricación bajo pedido |
+| `production_days` | Días estimados → `Product.fabricationTime` |
+| `search_vector` | Búsqueda full-text (GIN index) |
+| `published_at` | Ordenamiento y paginación por cursor |
 | `status` | `draft`, `active`, `inactive`, `archived` |
 | `featured` | Destacados en home o promociones |
-| `production_days` | Fabricación bajo pedido |
 
 **Escalabilidad:**
 
 - Índice compuesto `(workshop_id, status)` optimiza el catálogo por taller (caso más frecuente).
 - `slug` único global mantiene rutas actuales de Next.js sin ambigüedad.
-- `stock` a nivel producto + detalle en variantes permite operación simple al inicio y granularidad después.
+- `stock` a nivel producto se **sincroniza automáticamente** desde variantes (trigger). La fuente de verdad es `product_variants.stock`.
 - `archived` preserva historial sin borrar filas (importante para analytics futuros).
 - Con cientos de talleres × decenas de productos = miles de filas: PostgreSQL maneja esto bien con índices actuales; más adelante se puede particionar por `workshop_id` si fuera necesario.
 
@@ -140,9 +146,10 @@ Soporta la UI de detalle (Sprint 3): imagen principal, miniaturas, contador, swi
 
 | Campo | Uso |
 |-------|-----|
+| `image_url` | URL pública o path en Storage → `ProductImage.url` |
+| `alt_text` | Texto alternativo para accesibilidad |
 | `sort_order` | Orden en galería |
 | `is_cover` | Imagen principal en listados |
-| `image_url` | URL pública o path en Storage (fase posterior) |
 
 **Escalabilidad:**
 
@@ -164,14 +171,16 @@ Refleja la normalización actual en `src/lib/products/normalize.ts` (colores × 
 
 | Campo | Uso |
 |-------|-----|
-| `color`, `size` | Selectores en detalle y carrito |
-| `stock` | Disponibilidad por variante |
+| `color_name`, `color_value` | Selectores en detalle y carrito (hex para UI) |
+| `size` | Talla o medida |
+| `stock` | Disponibilidad por variante (fuente de verdad) |
+| `available` | Disponibilidad de la variante |
 | `price` | Override opcional; NULL usa `products.price` |
 | `sku` | Código interno del taller |
 
 **Escalabilidad:**
 
-- `UNIQUE (product_id, color, size)` evita duplicados.
+- `UNIQUE (product_id, color_name, size)` evita duplicados.
 - Índice en `(product_id, stock)` acelera consultas de "pocas unidades" o "agotado".
 - Talleres con catálogos grandes (50+ productos × 10+ variantes) siguen siendo manejables; el cuello de botella suele ser la app, no la BD.
 
@@ -231,15 +240,15 @@ Con ~500 talleres y ~5.000 productos:
 **No se ejecuta automáticamente desde la app.**
 
 1. Abrir Supabase → SQL Editor.
-2. Pegar el contenido de `supabase/schema.sql`.
+2. Pegar el contenido de `supabase/schema.sql` (v1.1).
 3. Ejecutar manualmente.
-4. Verificar tablas en Table Editor.
+4. Pegar y ejecutar `supabase/seed.sql` (solo dev/staging).
+5. Verificar tablas en Table Editor.
 
 Después (fuera de este schema):
 
-- Seed de categorías y talleres simulados.
-- Ajustar `src/lib/supabase/fetch-products.ts` si los nombres de columnas difieren del código Fase A.
 - Activar RLS en Sprint posterior.
+- Configurar variables Supabase en Vercel.
 
 ---
 
@@ -252,7 +261,23 @@ Después (fuera de este schema):
 | `src/data/products.ts` | `products` + `product_images` + `product_variants` |
 | `AdminProduct` (panel) | `products` + variantes + imágenes |
 | `Product` (tipo TS) | Join de producto + imágenes + variantes + taller + categoría |
+| `fetch-products.ts` | Alineado con schema v1.1 (`short_description`, `compare_price`, `image_url`, etc.) |
 
 ---
 
-*Schema v1 — AtresColombia. Sin datos, sin RLS, sin auth.*
+## Cambios v1 → v1.1
+
+| Área | Cambio |
+|------|--------|
+| `products` | `available`, `made_to_order`, `is_new`, `material`, `care_instructions`, `origin`, `rating`, `review_count`, `sold_count`, `published_at`, `search_vector` |
+| `product_variants` | `color` → `color_name` + `color_value`; `available` |
+| `product_images` | `alt_text` |
+| `brands` | `updated_at` + trigger |
+| Integridad | Trigger `validate_product_brand_workshop` |
+| Stock | Trigger `sync_product_stock_from_variants` |
+| Índices | Compuestos para catálogo activo, categoría, búsqueda GIN |
+| App | `fetch-products.ts` y `map-product.ts` alineados |
+
+---
+
+*Schema v1.1 — AtresColombia. Seed incluido. Sin RLS, sin auth.*

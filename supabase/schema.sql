@@ -1,11 +1,18 @@
 -- =============================================================================
--- AtresColombia — schema.sql (v1)
+-- AtresColombia — schema.sql (v1.1)
 -- =============================================================================
 -- Plataforma multi-taller / multi-tienda. La entidad principal es `workshops`.
 --
 -- Incluye: workshops, brands, categories, products, product_images, product_variants
 --
--- NO incluye en esta versión: auth, profiles, orders, pagos, favoritos, RLS.
+-- Cambios respecto a v1:
+--   - Columnas alineadas con la app Next.js (available, made_to_order, color_name/value, alt_text)
+--   - Trigger brand_id ↔ workshop_id
+--   - Trigger sincronizacion products.stock desde variantes
+--   - Indices compuestos para escala
+--   - Columna search_vector para busqueda full-text
+--
+-- NO incluye: auth, profiles, orders, pagos, favoritos, RLS.
 -- Ejecutar manualmente en el SQL Editor de Supabase o via CLI cuando corresponda.
 -- =============================================================================
 
@@ -16,7 +23,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- -----------------------------------------------------------------------------
--- Función reutilizable: actualizar updated_at
+-- Funcion reutilizable: actualizar updated_at
 -- -----------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.set_updated_at()
@@ -32,10 +39,86 @@ $$;
 COMMENT ON FUNCTION public.set_updated_at IS
   'Trigger function que asigna updated_at = now() en cada UPDATE.';
 
+-- -----------------------------------------------------------------------------
+-- Validar que brand_id pertenezca al mismo workshop del producto
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.validate_product_brand_workshop()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.brand_id IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM public.brands b
+      WHERE b.id = NEW.brand_id
+        AND b.workshop_id = NEW.workshop_id
+    ) THEN
+      RAISE EXCEPTION
+        'brand_id % no pertenece al workshop_id % del producto',
+        NEW.brand_id,
+        NEW.workshop_id;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+COMMENT ON FUNCTION public.validate_product_brand_workshop IS
+  'Impide asociar una marca de otro taller al producto.';
+
+-- -----------------------------------------------------------------------------
+-- Sincronizar stock agregado del producto desde sus variantes
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.sync_product_stock_from_variants()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  target_product_id UUID;
+BEGIN
+  target_product_id := COALESCE(NEW.product_id, OLD.product_id);
+
+  UPDATE public.products p
+  SET stock = COALESCE(
+    (
+      SELECT SUM(v.stock)
+      FROM public.product_variants v
+      WHERE v.product_id = target_product_id
+    ),
+    0
+  )
+  WHERE p.id = target_product_id;
+
+  RETURN COALESCE(NEW, OLD);
+END;
+$$;
+
+COMMENT ON FUNCTION public.sync_product_stock_from_variants IS
+  'Mantiene products.stock como suma de product_variants.stock (fuente de verdad: variantes).';
+
+-- -----------------------------------------------------------------------------
+-- Actualizar search_vector en products
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.products_search_vector_update()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.search_vector :=
+    setweight(to_tsvector('spanish', COALESCE(NEW.name, '')), 'A') ||
+    setweight(to_tsvector('spanish', COALESCE(NEW.short_description, '')), 'B') ||
+    setweight(to_tsvector('spanish', COALESCE(NEW.description, '')), 'C');
+  RETURN NEW;
+END;
+$$;
+
 -- =============================================================================
 -- TABLA: workshops
--- =============================================================================
--- Talleres y tiendas verificadas. Cada punto de confección es dueño de su catálogo.
 -- =============================================================================
 
 CREATE TABLE public.workshops (
@@ -95,19 +178,7 @@ CREATE TABLE public.workshops (
 );
 
 COMMENT ON TABLE public.workshops IS
-  'Talleres y tiendas de AtresColombia. Entidad raíz del modelo: cada catálogo pertenece a un workshop.';
-
-COMMENT ON COLUMN public.workshops.slug IS
-  'Identificador legible para URLs publicas, ej. atres-colombia, confecciones-soacha.';
-
-COMMENT ON COLUMN public.workshops.verified IS
-  'Indica si el taller fue verificado por la plataforma (Taller/Tienda verificada en UI).';
-
-COMMENT ON COLUMN public.workshops.production_time IS
-  'Texto comercial del tiempo promedio de confeccion, ej. "5 a 7 dias habiles".';
-
-COMMENT ON COLUMN public.workshops.status IS
-  'Estado operativo: active (visible), pending (onboarding), inactive (oculto).';
+  'Talleres y tiendas de AtresColombia. Entidad raiz del modelo: cada catalogo pertenece a un workshop.';
 
 CREATE INDEX idx_workshops_status
   ON public.workshops (status);
@@ -118,6 +189,10 @@ CREATE INDEX idx_workshops_city
 CREATE INDEX idx_workshops_verified_active
   ON public.workshops (verified, status);
 
+CREATE INDEX idx_workshops_active_list
+  ON public.workshops (city, rating DESC)
+  WHERE status = 'active';
+
 CREATE TRIGGER trg_workshops_set_updated_at
   BEFORE UPDATE ON public.workshops
   FOR EACH ROW
@@ -125,8 +200,6 @@ CREATE TRIGGER trg_workshops_set_updated_at
 
 -- =============================================================================
 -- TABLA: brands
--- =============================================================================
--- Marcas opcionales dentro de un taller. Un workshop puede tener cero o muchas.
 -- =============================================================================
 
 CREATE TABLE public.brands (
@@ -137,6 +210,7 @@ CREATE TABLE public.brands (
   logo_url     TEXT,
   description  TEXT,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
   CONSTRAINT brands_workshop_id_fkey
     FOREIGN KEY (workshop_id)
@@ -155,18 +229,18 @@ CREATE TABLE public.brands (
 );
 
 COMMENT ON TABLE public.brands IS
-  'Marcas comerciales opcionales asociadas a un taller. No todas las tiendas necesitan marca propia.';
-
-COMMENT ON COLUMN public.brands.workshop_id IS
-  'Taller dueno de la marca. Si se elimina el taller, sus marcas se eliminan en cascada.';
+  'Marcas comerciales opcionales asociadas a un taller.';
 
 CREATE INDEX idx_brands_workshop_id
   ON public.brands (workshop_id);
 
+CREATE TRIGGER trg_brands_set_updated_at
+  BEFORE UPDATE ON public.brands
+  FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
+
 -- =============================================================================
 -- TABLA: categories
--- =============================================================================
--- Taxonomia global de la plataforma (Chaquetas, Camisas, Calzado, etc.).
 -- =============================================================================
 
 CREATE TABLE public.categories (
@@ -190,19 +264,11 @@ CREATE TABLE public.categories (
 COMMENT ON TABLE public.categories IS
   'Categorias globales de AtresColombia. Compartidas por todos los talleres.';
 
-COMMENT ON COLUMN public.categories.icon IS
-  'Nombre o ruta de icono para UI (Lucide, emoji codificado o asset URL).';
-
-COMMENT ON COLUMN public.categories.slug IS
-  'Slug estable para filtros y URLs, ej. chaquetas, calzado.';
-
 CREATE INDEX idx_categories_name
   ON public.categories (name);
 
 -- =============================================================================
 -- TABLA: products
--- =============================================================================
--- Prendas y articulos publicados por un taller. Pueden tener marca opcional.
 -- =============================================================================
 
 CREATE TABLE public.products (
@@ -218,11 +284,22 @@ CREATE TABLE public.products (
   compare_price           INTEGER,
   currency                TEXT        NOT NULL DEFAULT 'COP',
   stock                   INTEGER     NOT NULL DEFAULT 0,
+  available               BOOLEAN     NOT NULL DEFAULT TRUE,
+  made_to_order           BOOLEAN     NOT NULL DEFAULT FALSE,
+  is_new                  BOOLEAN     NOT NULL DEFAULT FALSE,
+  material                TEXT,
+  care_instructions       TEXT,
+  origin                  TEXT,
+  rating                  NUMERIC(2, 1) NOT NULL DEFAULT 0.0,
+  review_count            INTEGER     NOT NULL DEFAULT 0,
+  sold_count              INTEGER     NOT NULL DEFAULT 0,
   status                  TEXT        NOT NULL DEFAULT 'draft',
   featured                BOOLEAN     NOT NULL DEFAULT FALSE,
   supports_customization  BOOLEAN     NOT NULL DEFAULT FALSE,
   supports_home_trial     BOOLEAN     NOT NULL DEFAULT FALSE,
   production_days         INTEGER,
+  published_at            TIMESTAMPTZ,
+  search_vector           TSVECTOR,
   created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
@@ -265,6 +342,15 @@ CREATE TABLE public.products (
   CONSTRAINT products_production_days_positive_check
     CHECK (production_days IS NULL OR production_days >= 0),
 
+  CONSTRAINT products_rating_range_check
+    CHECK (rating >= 0 AND rating <= 5),
+
+  CONSTRAINT products_review_count_non_negative_check
+    CHECK (review_count >= 0),
+
+  CONSTRAINT products_sold_count_non_negative_check
+    CHECK (sold_count >= 0),
+
   CONSTRAINT products_currency_check
     CHECK (currency IN ('COP')),
 
@@ -275,26 +361,20 @@ CREATE TABLE public.products (
 COMMENT ON TABLE public.products IS
   'Catalogo de productos. Cada fila pertenece a un taller; la categoria es global.';
 
-COMMENT ON COLUMN public.products.workshop_id IS
-  'Taller que fabrica y vende el producto. RESTRICT al borrar: no se puede eliminar un taller con productos.';
-
-COMMENT ON COLUMN public.products.brand_id IS
-  'Marca opcional del producto dentro del taller. NULL si no aplica.';
-
 COMMENT ON COLUMN public.products.short_description IS
-  'Resumen para tarjetas de catalogo y listados verticales.';
+  'Resumen para tarjetas de catalogo (mapea a Product.description en la app).';
+
+COMMENT ON COLUMN public.products.description IS
+  'Descripcion larga del detalle (mapea a Product.longDescription en la app).';
 
 COMMENT ON COLUMN public.products.compare_price IS
-  'Precio anterior tachado en UI. Debe ser mayor o igual al precio actual.';
+  'Precio anterior tachado en UI (mapea a Product.previousPrice).';
 
 COMMENT ON COLUMN public.products.stock IS
-  'Inventario agregado a nivel producto. Las variantes pueden tener stock detallado.';
+  'Inventario agregado sincronizado desde product_variants via trigger.';
 
-COMMENT ON COLUMN public.products.status IS
-  'draft = borrador; active = visible; inactive = oculto; archived = historico.';
-
-COMMENT ON COLUMN public.products.production_days IS
-  'Dias estimados de confeccion cuando aplica fabricacion bajo pedido.';
+COMMENT ON COLUMN public.products.published_at IS
+  'Fecha de publicacion para ordenamiento y paginacion por cursor.';
 
 CREATE INDEX idx_products_workshop_id
   ON public.products (workshop_id);
@@ -312,6 +392,16 @@ CREATE INDEX idx_products_status
 CREATE INDEX idx_products_workshop_status
   ON public.products (workshop_id, status);
 
+CREATE INDEX idx_products_workshop_active_created
+  ON public.products (workshop_id, created_at DESC)
+  WHERE status = 'active';
+
+CREATE INDEX idx_products_category_status
+  ON public.products (category_id, status);
+
+CREATE INDEX idx_products_status_created
+  ON public.products (status, created_at DESC);
+
 CREATE INDEX idx_products_featured_active
   ON public.products (featured, status)
   WHERE status = 'active';
@@ -319,21 +409,35 @@ CREATE INDEX idx_products_featured_active
 CREATE INDEX idx_products_price
   ON public.products (price);
 
+CREATE INDEX idx_products_search
+  ON public.products USING GIN (search_vector);
+
 CREATE TRIGGER trg_products_set_updated_at
   BEFORE UPDATE ON public.products
   FOR EACH ROW
   EXECUTE FUNCTION public.set_updated_at();
 
+CREATE TRIGGER trg_products_search_vector_update
+  BEFORE INSERT OR UPDATE OF name, short_description, description
+  ON public.products
+  FOR EACH ROW
+  EXECUTE FUNCTION public.products_search_vector_update();
+
+CREATE TRIGGER trg_products_validate_brand_workshop
+  BEFORE INSERT OR UPDATE OF brand_id, workshop_id
+  ON public.products
+  FOR EACH ROW
+  EXECUTE FUNCTION public.validate_product_brand_workshop();
+
 -- =============================================================================
 -- TABLA: product_images
--- =============================================================================
--- Galeria de imagenes por producto. Una puede marcarse como portada.
 -- =============================================================================
 
 CREATE TABLE public.product_images (
   id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   product_id   UUID        NOT NULL,
   image_url    TEXT        NOT NULL,
+  alt_text     TEXT,
   sort_order   INTEGER     NOT NULL DEFAULT 0,
   is_cover     BOOLEAN     NOT NULL DEFAULT FALSE,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -354,11 +458,8 @@ CREATE TABLE public.product_images (
 COMMENT ON TABLE public.product_images IS
   'Imagenes del producto ordenadas para galeria, miniaturas y zoom en detalle.';
 
-COMMENT ON COLUMN public.product_images.sort_order IS
-  'Orden ascendente de visualizacion en galeria (0 = primera).';
-
-COMMENT ON COLUMN public.product_images.is_cover IS
-  'Marca la imagen principal del producto en listados y tarjetas.';
+COMMENT ON COLUMN public.product_images.image_url IS
+  'URL publica o path en Storage (mapea a ProductImage.url en la app).';
 
 CREATE INDEX idx_product_images_product_id
   ON public.product_images (product_id);
@@ -366,7 +467,6 @@ CREATE INDEX idx_product_images_product_id
 CREATE INDEX idx_product_images_product_sort
   ON public.product_images (product_id, sort_order);
 
--- Solo una portada por producto
 CREATE UNIQUE INDEX uq_product_images_one_cover_per_product
   ON public.product_images (product_id)
   WHERE is_cover = TRUE;
@@ -374,17 +474,17 @@ CREATE UNIQUE INDEX uq_product_images_one_cover_per_product
 -- =============================================================================
 -- TABLA: product_variants
 -- =============================================================================
--- Variantes por color y talla. Permite stock y precio por combinacion.
--- =============================================================================
 
 CREATE TABLE public.product_variants (
   id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   product_id   UUID        NOT NULL,
-  color        TEXT        NOT NULL,
+  color_name   TEXT        NOT NULL,
+  color_value  TEXT        NOT NULL DEFAULT '#111111',
   size         TEXT        NOT NULL,
   sku          TEXT,
   stock        INTEGER     NOT NULL DEFAULT 0,
   price        INTEGER,
+  available    BOOLEAN     NOT NULL DEFAULT TRUE,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
   CONSTRAINT product_variants_product_id_fkey
@@ -393,8 +493,11 @@ CREATE TABLE public.product_variants (
     ON UPDATE CASCADE
     ON DELETE CASCADE,
 
-  CONSTRAINT product_variants_color_not_blank_check
-    CHECK (LENGTH(TRIM(color)) > 0),
+  CONSTRAINT product_variants_color_name_not_blank_check
+    CHECK (LENGTH(TRIM(color_name)) > 0),
+
+  CONSTRAINT product_variants_color_value_format_check
+    CHECK (color_value ~ '^#[0-9A-Fa-f]{6}$'),
 
   CONSTRAINT product_variants_size_not_blank_check
     CHECK (LENGTH(TRIM(size)) > 0),
@@ -406,23 +509,17 @@ CREATE TABLE public.product_variants (
     CHECK (price IS NULL OR price >= 0),
 
   CONSTRAINT product_variants_product_color_size_unique
-    UNIQUE (product_id, color, size)
+    UNIQUE (product_id, color_name, size)
 );
 
 COMMENT ON TABLE public.product_variants IS
-  'Combinaciones color/talla de un producto con inventario y precio opcional por variante.';
+  'Combinaciones color/talla con inventario. Fuente de verdad del stock.';
 
-COMMENT ON COLUMN public.product_variants.color IS
+COMMENT ON COLUMN public.product_variants.color_name IS
   'Nombre comercial del color, ej. Verde bosque, Negro.';
 
-COMMENT ON COLUMN public.product_variants.size IS
-  'Talla o medida, ej. S, M, L, 38, 40.';
-
-COMMENT ON COLUMN public.product_variants.price IS
-  'Precio especifico de la variante. NULL hereda products.price.';
-
-COMMENT ON COLUMN public.product_variants.sku IS
-  'Codigo interno del taller para inventario.';
+COMMENT ON COLUMN public.product_variants.color_value IS
+  'Valor hex para selector visual en UI, ej. #2D5016.';
 
 CREATE INDEX idx_product_variants_product_id
   ON public.product_variants (product_id);
@@ -434,6 +531,12 @@ CREATE INDEX idx_product_variants_sku
 CREATE INDEX idx_product_variants_stock
   ON public.product_variants (product_id, stock);
 
+CREATE TRIGGER trg_product_variants_sync_stock
+  AFTER INSERT OR UPDATE OF stock OR DELETE
+  ON public.product_variants
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sync_product_stock_from_variants();
+
 -- =============================================================================
--- Fin del schema v1
+-- Fin del schema v1.1
 -- =============================================================================

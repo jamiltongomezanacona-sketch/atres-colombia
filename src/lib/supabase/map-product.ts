@@ -19,9 +19,10 @@ type SupabaseCategoryRow = {
 
 type SupabaseProductImageRow = {
   id: string;
-  url: string;
+  image_url: string;
   alt_text: string | null;
   sort_order: number | null;
+  is_cover: boolean | null;
 };
 
 type SupabaseProductVariantRow = {
@@ -40,23 +41,22 @@ export type SupabaseProductRow = {
   workshop_id: string;
   category_id: string;
   name: string;
+  short_description: string;
   description: string;
-  long_description: string;
   price: number;
-  previous_price: number | null;
-  discount_label: string | null;
+  compare_price: number | null;
+  stock: number | null;
   available: boolean;
   made_to_order: boolean;
-  stock_level: ProductStockLevel | null;
-  status: string | null;
   is_new: boolean | null;
   material: string | null;
-  fabrication_time: string | null;
+  production_days: number | null;
   care_instructions: string | null;
   origin: string | null;
   rating: number | null;
   review_count: number | null;
   sold_count: number | null;
+  status: string | null;
   workshops: SupabaseWorkshopRow | SupabaseWorkshopRow[] | null;
   categories: SupabaseCategoryRow | SupabaseCategoryRow[] | null;
   product_images: SupabaseProductImageRow[] | null;
@@ -71,10 +71,71 @@ function unwrapRelation<T>(value: T | T[] | null): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
+function computeDiscount(
+  price: number,
+  comparePrice: number | null,
+): string | undefined {
+  if (!comparePrice || comparePrice <= price) {
+    return undefined;
+  }
+
+  const percent = Math.round(((comparePrice - price) / comparePrice) * 100);
+  return `-${percent}%`;
+}
+
+function formatProductionDays(days: number | null): string | undefined {
+  if (days == null || days <= 0) {
+    return undefined;
+  }
+
+  return `${days} dias habiles`;
+}
+
+function sumVariantStock(row: SupabaseProductRow): number {
+  const variants = row.product_variants ?? [];
+
+  if (variants.length === 0) {
+    return row.stock ?? 0;
+  }
+
+  return variants.reduce((total, variant) => total + (variant.stock ?? 0), 0);
+}
+
+function inferStockLevel(row: SupabaseProductRow): ProductStockLevel {
+  if (!row.available) {
+    return "out_of_stock";
+  }
+
+  if (row.made_to_order) {
+    const totalStock = sumVariantStock(row);
+    return totalStock > 0 && totalStock <= 5 ? "low_stock" : "made_to_order";
+  }
+
+  const totalStock = sumVariantStock(row);
+
+  if (totalStock <= 0) {
+    return "out_of_stock";
+  }
+
+  if (totalStock <= 5) {
+    return "low_stock";
+  }
+
+  return "in_stock";
+}
+
 function mapImages(row: SupabaseProductRow): ProductImage[] {
-  const images = [...(row.product_images ?? [])].sort(
-    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
-  );
+  const images = [...(row.product_images ?? [])].sort((a, b) => {
+    if (a.is_cover && !b.is_cover) {
+      return -1;
+    }
+
+    if (!a.is_cover && b.is_cover) {
+      return 1;
+    }
+
+    return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+  });
 
   if (images.length === 0) {
     return [
@@ -91,7 +152,7 @@ function mapImages(row: SupabaseProductRow): ProductImage[] {
   return images.map((image, index) => ({
     id: image.id,
     productId: row.id,
-    url: image.url,
+    url: image.image_url,
     alt: image.alt_text ?? row.name,
     sortOrder: image.sort_order ?? index,
   }));
@@ -133,10 +194,6 @@ export function mapSupabaseProductRow(row: SupabaseProductRow): Product | null {
     return null;
   }
 
-  const stockLevel: ProductStockLevel =
-    row.stock_level ??
-    (row.available ? "in_stock" : "out_of_stock");
-
   return {
     id: row.id,
     slug: row.slug,
@@ -146,28 +203,28 @@ export function mapSupabaseProductRow(row: SupabaseProductRow): Product | null {
     categoryId: category.slug,
     categoryName: category.name,
     name: row.name,
-    description: row.description,
-    longDescription: row.long_description,
+    description: row.short_description,
+    longDescription: row.description,
     price: row.price,
-    previousPrice: row.previous_price ?? undefined,
-    discount: row.discount_label ?? undefined,
+    previousPrice: row.compare_price ?? undefined,
+    discount: computeDiscount(row.price, row.compare_price),
     images: mapImages(row),
     variants: mapVariants(row),
     available: row.available,
     madeToOrder: row.made_to_order,
     isNew: row.is_new ?? undefined,
     material: row.material ?? undefined,
-    fabricationTime: row.fabrication_time ?? undefined,
+    fabricationTime: formatProductionDays(row.production_days),
     rating: row.rating ?? 4.5,
     reviewCount: row.review_count ?? 0,
     soldCount: row.sold_count ?? 0,
     careInstructions:
       row.care_instructions ??
-      "Lavar a mano o en ciclo suave con agua fria. No usar blanqueador. Secar a la sombra.",
+      "Lavar a mano o en ciclo suave con agua fria. No usar blanqueador. Secar a la sombra y planchar a temperatura baja.",
     origin:
       row.origin ??
       "Confeccionado en Colombia por talleres locales verificados.",
-    stockLevel,
+    stockLevel: inferStockLevel(row),
   };
 }
 

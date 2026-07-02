@@ -5,29 +5,31 @@ import {
 } from "@/lib/supabase/map-product";
 import type { Product } from "@/types/product";
 
+/** Limite de seguridad para evitar cargar millones de filas en build/SSR. */
+const PRODUCT_FETCH_LIMIT = 1000;
+
 const PRODUCT_SELECT = `
   id,
   slug,
   workshop_id,
   category_id,
   name,
+  short_description,
   description,
-  long_description,
   price,
-  previous_price,
-  discount_label,
+  compare_price,
+  stock,
   available,
   made_to_order,
-  stock_level,
-  status,
   is_new,
   material,
-  fabrication_time,
+  production_days,
   care_instructions,
   origin,
   rating,
   review_count,
   sold_count,
+  status,
   workshops (
     id,
     slug,
@@ -40,9 +42,10 @@ const PRODUCT_SELECT = `
   ),
   product_images (
     id,
-    url,
+    image_url,
     alt_text,
-    sort_order
+    sort_order,
+    is_cover
   ),
   product_variants (
     id,
@@ -66,7 +69,8 @@ export async function fetchProductsFromSupabase(): Promise<Product[]> {
     .from("products")
     .select(PRODUCT_SELECT)
     .eq("status", "active")
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .limit(PRODUCT_FETCH_LIMIT);
 
   if (error) {
     throw error;
